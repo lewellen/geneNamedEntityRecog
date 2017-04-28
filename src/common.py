@@ -44,7 +44,7 @@ class LabeledFormat:
                     taggedSentence = TaggedSentence([])
                 else:
                     parts = line.split('\t')                      
-                    taggedSentence.taggedWords.append(common.TaggedWord(parts[1], parts[0]))
+                    taggedSentence.taggedWords.append(TaggedWord(parts[1], parts[0]))
             
             if len(taggedSentence.taggedWords) > 0:
                 yield taggedSentence
