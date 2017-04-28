@@ -1,88 +1,12 @@
 import common
 
-class Gene:
-	def __init__(self, sentId, startIndex, endIndex, phrase):
-		self.sentId = sentId
-		self.startIndex = startIndex
-		self.endIndex = endIndex
-		self.phrase = phrase
-
-class Sentence:
-	def __init__(self, sentId, text):
-		self.sentId = sentId
-		self.text = text
-		self.genes = []
-
-	def addGene(self, gene):
-		self.genes.append(gene)
-
-	def getTagged(self):
-		wordBoundaries = self.tokenize(self.text)
-
-		geneBoundaries = {}
-		for gene in self.genes:
-			genBound = self.tokenize(gene.phrase)
-			for i in genBound:
-				value = 'I'
-				if i == 0:
-					value = 'B'
-
-				geneBoundaries.update( { i + gene.startIndex : value } )
-
-		tagged = []
-		sortedKeys = sorted(wordBoundaries.keys())
-		for i in sortedKeys:
-			tag = 'O'
-			if i in geneBoundaries:
-				tag = geneBoundaries[i]
-
-			tagged.append(common.TaggedWord(wordBoundaries[i], tag))
-	
-		return tagged
-
-	def tokenize(self, text):
-		tokens = {}
-		i, j = 0, 0
-		while i >= 0:
-			j = i
-			i = text.find(' ', j + 1)
-
-			if text[j] == ' ':
-				j += 1	
-
-			tokens.update( { j : text[j:i] } )
-
-		return tokens
-
-class GeneFormat:
+class TagFormat:
 	def __init__(self):
 		pass
 
 	def load(self, filePath):
-		genes = []
+		taggedSentences = []
 
-		with open(filePath) as f:
-			for line in f:
-				parts = line.strip().split('|')
-
-				sentId = parts[0]			
-				indexRange = parts[1].split(' ')
-				phrase = parts[2]
-
-				genes.append(Gene(
-					sentId, 
-					int(indexRange[0]), int(indexRange[1]), 
-					phrase
-				))
-
-		return genes
-
-class SentenceFormat:
-	def __init__(self):
-		pass
-
-	def load(self, filePath):
-		sentences = {}
 		with open(filePath) as f:
 			while True:
 				key = f.readline().strip()
@@ -90,7 +14,33 @@ class SentenceFormat:
 				if (key == '' and value == '') or (key is None and value is None):
 					break
 
-				sentences.update({ key : Sentence(key, value) })
+				taggedSentences.append(self.__rawToTagged(value))
 
-		return sentences
+		return taggedSentences
 
+	def __rawToTagged(self, sentence):
+		taggedSentence = []
+
+		pTag = None
+		rawWords = sentence.split()
+		for rawWord in rawWords:
+			word = None
+			tag = None
+
+			if rawWord.endswith('_TAG'):
+				word = rawWord[:-4]
+				tag = 'O'					
+			elif rawWord.endswith('_GENE1') or rawWord.endswith('_GENE2'):
+				word = rawWord[:-6]
+				tag = 'B'
+			else:
+				assert False
+
+			if pTag in ('B', 'I') and tag == 'B':
+				tag = 'I'
+
+			pTag = tag
+
+			taggedSentence.append(common.TaggedWord(word.strip(), tag))
+
+		return taggedSentence

@@ -12,14 +12,20 @@ class TaggedWord:
 
 		return (self.word == other.word) and (self.tag == other.tag)
 
-class TaggedFormat:
+class GoldFormat:
 	def __init__(self):
 		pass
 	
-	def save(self, filePath, sentences):
+	def saveWithTags(self, filePath, taggedSentences):
 		with open(filePath, "w") as f:
-			for sentence in sentences:
-				for tagged in sentence:
+			for taggedSentence in taggedSentences:
+				for tagged in taggedSentence:
 					f.write("%s %s\n" % (tagged.tag, tagged.word))
 				f.write("\n")
 
+	def saveWithoutTags(slef, filePath, taggedSentences):
+		with open(filePath, "w") as f:
+			for taggedSentence in taggedSentences:
+				for tagged in taggedSentence:
+					f.write("%s\n" % (tagged.word))
+				f.write("\n")
