@@ -1,0 +1,108 @@
+*
+===========================================================================
+*
+*                            PUBLIC DOMAIN NOTICE
+*               National Center for Biotechnology Information
+*
+*  This software/database is a "United States Government Work" under the
+*  terms of the United States Copyright Act.  It was written as part of
+*  the authors' official duties as a United States Government employee and
+*  thus cannot be copyrighted.  This software/database is freely available
+*  to the public for use. The National Library of Medicine and the U.S.
+*  Government have not placed any restriction on its use or reproduction.
+*
+*  Although all reasonable efforts have been taken to ensure the accuracy
+*  and reliability of the software and data, the NLM and the U.S.
+*  Government do not and cannot warrant the performance or results that
+*  may be obtained by using this software or data. The NLM and the U.S.
+*  Government disclaim all warranties, express or implied, including
+*  warranties of performance, merchantability or fitness for any particular
+*  purpose.
+*
+*  Please cite the authors in any work or product based on this material.
+*
+*
+===========================================================================
+*
+
+The files in this release of MedTag include data and support files for
+the MedTag database, and updates of the previously released corpora
+of GENETAG and MedPost.
+
+GeneTag (root directory)
+
+	README			- list all of the files
+
+GENETAG-05 (subdirectory genetag):
+
+	genetag.db		- flat file dump of genetag corpus
+	genetag.sql		- SQL to load genetag
+
+	genetag.sent		- untokenized sentences
+	genetag.tok		- tokenized sentences
+	genetag.tag		- tokenized sentences with gene phrases tagged (GENE1 or GENE2)
+	Gold.format		- all GENE phrases
+	Correct.data		- alternate GENE phrases
+
+	alt_eval.perl		- perl script to evaluate accuracy
+	format.perl		- perl script to convert tagged text to formatted data for eval
+
+MedPost (subdirectory medpost):
+
+	medpost.db		- flat file dump of medpost corpus
+	medpost.sql		- SQL to load genetag medpost
+
+	tag_cl.ioc		- tagged sentences of the MedPost corpus
+	tag_mb.ioc
+	tag_mb01.ioc
+	tag_mb02.ioc
+	tag_mb03.ioc
+	tag_mb04.ioc
+	tag_mb05.ioc
+	tag_mb06.ioc
+	tag_mb07.ioc
+	tag_mb08.ioc
+	tag_mb09.ioc
+	tag_mb10.ioc
+	tag_ml0.ioc
+
+Graphical Web Interface (requires mysql)
+
+1) Place these files in an http directory which is configured with
+   cgi-bin scripting enabled. The http server must be able to run perl
+   scripts and access the mysql database.
+
+2) Edit the file 'db-lib.perl' and enter the database,
+   username, and password of the mysql database of the medtag database.
+
+3) chmod the .cgi files to +x for the http server.
+
+4) Open the file medtag.html from a web browser. Documentation is
+   not currently provided.
+
+	cgi-lib.perl
+	db-lib.perl
+	delete_list.cgi
+	delete_phrase.cgi
+	edit_phrase.cgi
+	edit_token.cgi
+	footer.html
+	getSelected.js
+	insert_list.cgi
+	insert_phrase.cgi
+	list.cgi
+	medtag.html
+	print_token.cgi
+	search.cgi
+	sum_corps.cgi
+	sum_lists.cgi
+	update_token.cgi
+
+Some additional files are provided in this directory,
+To load data into a mysql database, run the sql script tables.sql, then
+each of medtag.sql and genetag.sql.
+
+	dump_db.perl		- dump the .db format
+	tables.sql		- definitions of tables
+	db_to_sql.perl		- generate sql from db for loading into a database
+
