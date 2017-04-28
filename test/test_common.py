@@ -1,5 +1,5 @@
 import unittest
-import common
+from src import common
 
 class TestCommonTaggedWord(unittest.TestCase):
 	def test_repr(self):

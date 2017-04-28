@@ -1,6 +1,5 @@
 import unittest
-import common
-import genetag
+from src import common, genetag
 
 class TestGenetagSentence(unittest.TestCase):
 	def test_tokenize(self):
