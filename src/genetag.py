@@ -4,7 +4,7 @@ class TagFormat:
 	def __init__(self):
 		pass
 
-	def load(self, filePath):
+	def deserialize(self, filePath):
 		taggedSentences = []
 
 		with open(filePath) as f:
@@ -19,7 +19,7 @@ class TagFormat:
 		return taggedSentences
 
 	def __rawToTagged(self, sentence):
-		taggedSentence = []
+		taggedWords = []
 
 		pTag = None
 		rawWords = sentence.split()
@@ -41,6 +41,6 @@ class TagFormat:
 
 			pTag = tag
 
-			taggedSentence.append(common.TaggedWord(word.strip(), tag))
+			taggedWords.append(common.TaggedWord(word.strip(), tag))
 
-		return taggedSentence
+		return common.TaggedSentence(taggedWords)
