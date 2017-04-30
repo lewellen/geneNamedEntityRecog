@@ -3,101 +3,78 @@ import random
 import common
 import hiddenMarkovModel as hmm
 
-class Evaluator:
-    def kFoldsCrossValidation(self, K, taggedSentences, smooth, prob):
-        trainAcc = []
-        testAcc = []
-        
-        for _ in range(0, K):
-            train, test = self.splitTrainTest(taggedSentences, 1.0 / K)
-            decoder = hmm.TagDecoder(CorpusStatistics(train, smooth), prob)
-            trainAcc.append(self.accuracy(train, decoder))
-            testAcc.append(self.accuracy(test, decoder))
+class ConfusionMatrix:
+	def __init__(self, classes, actuals, predictions):
+		if len(classes) == 0:
+			raise Exception("'classes' must have atleast one instance.")
 
-        return (sum(trainAcc) / K, sum(testAcc) / K)
+		if len(actuals) != len(predictions):
+			raise Exception("'actuals' and 'predictions' must have same number of entries.")
 
-    def splitTrainTest(self, dataset, portion):
-        random.shuffle(dataset)
-        
-        foldSize = int(len(dataset) * portion)
-        train = dataset[foldSize:]
-        test = dataset[:foldSize]
-        
-        return (train, test)
+		# Discrete set of domain outcomes (labels, classes, tags, etc)
+		self.classes = classes
 
-    def accuracy(self, dataset, decoder):
-        count = 0.0
-        numRight = 0.0
-        n = 0
-        
-        for expected in dataset:
-            actual = decoder.decode(Sentence(expected.toWordSeq()))
-            
-            alignment = zip(expected.toTagSeq(), actual.toTagSeq())
-            count += len(alignment)
-            numRight += len(filter(lambda (e,a): e == a, alignment))
+		# matrix[actual][predicted] = count
+		self.matrix = { a : { p : 0 for p in self.classes } for a in self.classes }
 
-            n += 1
-            if n > 100:
-                break
+		# tally the results based on a list of expected values and predicted values
+		for (a, p) in zip(actuals, predictions):
+			self.matrix[a][p] += 1
 
-        return numRight / count
+	def accuracy(self):
+		# Measure the number of correct predictions (sum_i M[i,i]) / (sum_{i,j} M[i,j})
+		n = sum( [ self.matrix[a][a] for a in self.classes] )
+		d = sum( [ sum([ self.matrix[a][p] for p in self.classes]) for a in self.classes ] )
 
-    def accuracyFromSets(self, expectedSet, actualSet):
-        count = 0.0
-        numRight = 0.0
-        
-        for (expected, actual) in zip(expectedSet, actualSet):
-            alignment = zip(expected.toTagSeq(), actual.toTagSeq())
-            count += len(alignment)
-            numRight += len(filter(lambda (e,a): e == a, alignment))
+		if d == 0:
+			raise ZeroDivisionError("Accuracy calculation requires non-zero confusion matrix.")
 
-        return numRight / count
+		return float(n) / float(d)
 
-    def accuracyFromMatrix(self, confusionMatrix):
-        count = 0.0
-        countRight = 0.0
-        for a in confusionMatrix:
-            for b in confusionMatrix[a]:
-                count += confusionMatrix[a][b]
-                if a == b:
-                    countRight += confusionMatrix[a][b]
+	def toConsole(self):
+		print("\t%s" % " ".join(map(lambda x : str(x), self.classes)))
+		for a in self.classes:
+			print("%s\t%s" % (
+				str(a),
+				" ".join([str(self.matrix[a][p]) for p in self.classes])
+			))
 
-        return countRight / count
+def kFoldsCrossValidation(K, taggedSentences, smooth, prob):
+	trainAcc = []
+	testAcc = []
 
-    def confusionMatrix(self, dataset, decoder):
-        matrix = {}
-        
-        for expected in dataset:
-            actual = decoder.decode(Sentence(expected.toWordSeq()))
-            
-            for (e, a) in zip(expected.taggedWords, actual.taggedWords):
-                if e.tag not in matrix:
-                    matrix[e.tag] = {}
-                
-                if a.tag not in matrix[e.tag]:
-                    matrix[e.tag][a.tag] = 0
-                    
-                matrix[e.tag][a.tag] += 1
+	for _ in range(0, K):
+		train, test = splitTrainTest(taggedSentences, 1.0 / K)
+		decoder = hmm.TagDecoder(CorpusStatistics(train, smooth), prob)
+		trainAcc.append(accuracy(train, decoder))
+		testAcc.append(accuracy(test, decoder))
 
-        return matrix
+	return (sum(trainAcc) / K, sum(testAcc) / K)
 
-    def reportConfusionMatrix(self, corpusStats, matrix):
-        print("\t"),
-        for actual in corpusStats.States:
-            print(actual),
-        print("")
-    
-        for expected in corpusStats.States:
-            if expected not in matrix:
-                continue
-            
-            print(expected),
-            
-            for actual in corpusStats.States:
-                if actual not in matrix[expected]:
-                    print(0),
-                else:
-                    print(matrix[expected][actual]),
-            
-            print("")
+def splitTrainTest(dataset, portion):
+	random.shuffle(dataset)
+
+	foldSize = int(len(dataset) * portion)
+	train = dataset[foldSize:]
+	test = dataset[:foldSize]
+
+	return (train, test)
+
+def accuracy(dataset, decoder):
+	count = 0.0
+	numRight = 0.0
+	n = 0
+
+	for expected in dataset:
+		actual = decoder.decode(common.Sentence(expected.toWordSeq()))
+
+		alignment = zip(expected.toTagSeq(), actual.toTagSeq())
+		count += len(alignment)
+		numRight += len(filter(lambda (e,a): e == a, alignment))
+
+		n += 1
+		if n > 100:
+			break
+
+	return numRight / count
+

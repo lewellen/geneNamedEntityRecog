@@ -12,6 +12,7 @@ from numpy.core.defchararray import lower
 import common 
 import hiddenMarkovModel as hmm
 import evaluation
+from features import AllUpperFeature, AllLowerFeature, CapitalizedFeature, IsNumberFeature, PuncFeature, RomanNumFeature, AlphaNumericFeature, EnglishSuffixFeature, LatinPrefixFeature, LatinSuffixFeature, GreekLetterFeature, DeterminerFeature, PrepositionFeature
 
 class TagPredictor:
     def __init__(self, training, featurizer):
@@ -52,46 +53,17 @@ class TagPredictor:
 
 class Featurizer:
     def __init__(self):
-
-        self.isPunc = re.compile("^[^\w\s]+$")
-        self.containsLetter = re.compile("[A-Z]|[a-z]")
-        self.containsNumber = re.compile("[0-9]")
-        self.isRomanNumeral = re.compile("^[IVXLCDM]+$")
-        self.greekAlphabet = ["alpha", "beta", "gamma", "delta", "epsilon", "zeta", "eta", "theta", "iota", "kappa", "lambda", "mu", "nu", "xi", "omicron", "pi", "rho", "sigma", "tau", "upsilon", "phi", "chi", "psi", "omega"]
+	self.features = [
+		AllUpperFeature(), AllLowerFeature(), CapitalizedFeature(), IsNumberFeature(),
+		PuncFeature(), RomanNumFeature(), AlphaNumericFeature(), EnglishSuffixFeature(),
+		LatinPrefixFeature(), LatinSuffixFeature(), GreekLetterFeature(),
+		DeterminerFeature(), PrepositionFeature()
+		]
 
     def __call__(self, word):
-        # Features that describe the contents of the string (Motivated by predict:O vs:expect: B)
-        if re.search(self.containsLetter, word)  != None and re.search(self.containsNumber, word) != None:
-            yield "<C3PO>"
-  
-        if word.upper() == word:
-            yield "<Upper>"
-          
-        if word.lower() == lower:
-            yield "<Lower>"
-          
-        if word[0].isupper():
-            yield "<Proper>"
-  
-        # Features that describe what the word is (Motivated by predict:O vs expected:I)
-        if re.match(self.isPunc, word):
-            yield "<Punc>"
-
-        if self.__isNumber(word):
-            yield "<Number>"
-
-        if re.match(self.isRomanNumeral, word):
-            yield "<Roman>"
-  
-        if word.lower() in self.greekAlphabet:
-            yield "<Greek>"
-
-        # Motivated by (predict:B expected:O)
-        yield "<" + str(len(word)) + ">"
-
-        # Poor man's stemming (Baseline)
-        x = max(int(0.8 * len(word)), 3)
-        yield word[:x].lower()
+	for feature in self.features:
+		if feature.hasFeature(word):
+			yield feature.getName()
 
 
     def __isNumber(self, x):
@@ -152,8 +124,7 @@ def createDecoder(train):
 
 def createTrainTest(inputFilePath, trainFilePath, testFilePath):
     fileformat = common.LabeledFormat()
-    evaluator = evaluation.Evaluator()
-    train, test = evaluator.splitTrainTest(list(fileformat.deserialize(inputFilePath)), 1/5.0)
+    train, test = evaluation.splitTrainTest(list(fileformat.deserialize(inputFilePath)), 1/5.0)
 
     fileformat.serialize(train, trainFilePath)
     fileformat.serialize(test, testFilePath)
