@@ -8,52 +8,79 @@ class Feature:
 		return None
 
 	def hasFeature(self, word):
-		return False
+		return False, None
 
 	def selfSelect(self, taggedSentences, tag):
 		pass
 
-class AllUpperFeature(Feature):
-	def getName(self):
-		return "AllUpper"
-
-	def hasFeature(self, word):
-		return word.upper() == word
-
-class AllLowerFeature(Feature):
-	def getName(self):
-		return "AllLower"
-
-	def hasFeature(self, word):
-		return word.lower() == word
-
-class CapitalizedFeature(Feature):
-	def getName(self):
-		return "Capitalized"
-
-	def hasFeature(self, word):
-		if len(word) < 1:
-			return False
-
-		return word[0].isupper()
-
-class IsNumberFeature(Feature):
-	def getName(self):
-		return "Number"
-
-	def hasFeature(self, word):
-		try:
-			float(word)
-			return True
-		except ValueError:
-			return False
-
 class RegExFeature(Feature):
 	def hasFeature(self, word):
-		return re.match(self.getRegEx(), word)
+		if word is None:
+			return False
+
+		return re.match(self.getRegEx(), word), word
 
 	def getRegEx(self):
 		return None
+
+class AllLowerLettersFeature(RegExFeature):
+	def __init__(self):
+		self.regex = re.compile("^[a-z]+$")
+
+	def getName(self):
+		return "AllLowerLetters"
+
+	def getRegEx(self):
+		return self.regex
+
+class AllUpperLettersFeature(RegExFeature):
+	def __init__(self):
+		self.regex = re.compile("^[A-Z]+$")
+
+	def getName(self):
+		return "AllUpperLetters"
+
+	def getRegEx(self):
+		return self.regex
+
+class AlphaNumericFeature(RegExFeature):
+	def __init__(self):
+		self.containsLetter= re.compile("[A-Z]|[a-z]")
+		self.containsDigit = re.compile("[0-9]")
+
+	def getName(self):
+		return "AlphaNumeric"
+
+	def getRegEx(self):
+		return None
+
+	def hasFeature(self, word):
+		if word is None:
+			return False
+
+		# want all words that contain both letters and digits, not either or
+		# E.g., accept 'C3PO' but reject '124' and 'foo'.
+		return re.search(self.containsLetter, word) and re.search(self.containsDigit, word), word	
+
+class CapitalizedFeature(RegExFeature):
+	def __init__(self):
+		self.regex = re.compile("^[A-Z][a-z]*$")
+
+	def getName(self):
+		return "Capitalized"
+
+	def getRegEx(self):
+		return self.regex
+
+class PositiveIntegerFeature(RegExFeature):
+	def __init__(self):
+		self.regex = re.compile("^\+?[1-9][0-9]*$")
+
+	def getName(self):
+		return "PositiveInteger"
+
+	def getRegEx(self):
+		return self.regex
 
 class PuncFeature(RegExFeature):
 	def __init__(self):
@@ -75,17 +102,6 @@ class RomanNumFeature(RegExFeature):
 
 	def getRegEx(self):
 		return self.regex
-
-class AlphaNumericFeature(Feature):
-	def __init__(self):
-		self.containsLetter = re.compile("[A-Z]|[a-z]")
-		self.containsNumber = re.compile("[0-9]")
-
-	def getName(self):
-		return "AlphaNumeric"
-
-	def hasFeature(self, word):
-		return re.search(self.containsLetter, word) != None and re.search(self.containsNumber, word) != None
 
 class WordPartFeature:
 	def __init__(self):

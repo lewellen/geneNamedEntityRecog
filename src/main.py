@@ -12,12 +12,12 @@ from numpy.core.defchararray import lower
 import common 
 import hiddenMarkovModel as hmm
 import evaluation
-from features import AllUpperFeature, AllLowerFeature, CapitalizedFeature, IsNumberFeature, PuncFeature, RomanNumFeature, AlphaNumericFeature, EnglishSuffixFeature, LatinPrefixFeature, LatinSuffixFeature, GreekLetterFeature, DeterminerFeature, PrepositionFeature
+from features import AllUpperLettersFeature, AllLowerLettersFeature, CapitalizedFeature, PositiveIntegerFeature, PuncFeature, RomanNumFeature, AlphaNumericFeature, EnglishSuffixFeature, LatinPrefixFeature, LatinSuffixFeature, GreekLetterFeature, DeterminerFeature, PrepositionFeature
 
 class TagPredictor:
     def __init__(self, training, featurizer):
         self.vectorizer = CountVectorizer(ngram_range=(1, 3), analyzer=featurizer, binary=True)
-        self.model = LogisticRegression()
+        self.model = LogisticRegression(multi_class = 'ovr') # use one vs rest
 
         self.model.fit(
             self.vectorizer.fit_transform(self.__toSklearnX(training)), 
@@ -52,19 +52,22 @@ class TagPredictor:
                 yield self.__tagToIndex(taggedWord.tag)
 
 class Featurizer:
-    def __init__(self):
+    def __init__(self, train):
 	self.features = [
-		AllUpperFeature(), AllLowerFeature(), CapitalizedFeature(), IsNumberFeature(),
+		AllUpperLettersFeature(), AllLowerLettersFeature(), CapitalizedFeature(), PositiveIntegerFeature(),
 		PuncFeature(), RomanNumFeature(), AlphaNumericFeature(), EnglishSuffixFeature(),
 		LatinPrefixFeature(), LatinSuffixFeature(), GreekLetterFeature(),
 		DeterminerFeature(), PrepositionFeature()
 		]
 
+	tags = ["I", "O", "B"]
+	for feature in self.features:
+		feature.selfSelect(train, tags)
+
     def __call__(self, word):
 	for feature in self.features:
 		if feature.hasFeature(word):
 			yield feature.getName()
-
 
     def __isNumber(self, x):
         try:
@@ -149,7 +152,7 @@ def decode(trainFilePath, testFilePath, outputFilePath):
     test = list(testFormat.deserialize(testFilePath))
 
     # For each word in a test sentence, predict its tag
-    featurizer = Featurizer()
+    featurizer = Featurizer(train)
     classifier = TagPredictor(train, featurizer)
     B = [ common.Sentence( [ classifier.predictValue(w) for w in s.words] ) for s in test]
 

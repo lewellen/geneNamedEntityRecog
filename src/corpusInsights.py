@@ -6,7 +6,7 @@ import operator
 import common
 import hiddenMarkovModel as hmm
 import jointFreqMatrix
-from features import AllUpperFeature, AllLowerFeature, CapitalizedFeature, IsNumberFeature, PuncFeature, RomanNumFeature, AlphaNumericFeature, EnglishSuffixFeature, LatinPrefixFeature, LatinSuffixFeature, GreekLetterFeature, DeterminerFeature, PrepositionFeature
+from features import AllUpperLettersFeature, AllLowerLettersFeature, CapitalizedFeature, PositiveIntegerFeature, PuncFeature, RomanNumFeature, AlphaNumericFeature, EnglishSuffixFeature, LatinPrefixFeature, LatinSuffixFeature, GreekLetterFeature, DeterminerFeature, PrepositionFeature
 
 import numpy
 import matplotlib.pyplot as plot
@@ -129,7 +129,7 @@ def featuresByTag(labeledFilePath):
 	taggedSentences = [ taggedSentence for taggedSentence in lFormat.deserialize(labeledFilePath) ]
 
 	features = [
-		AllUpperFeature(), AllLowerFeature(), CapitalizedFeature(), IsNumberFeature(),
+		AllUpperLettersFeature(), AllLowerLettersFeature(), CapitalizedFeature(), PositiveIntegerFeature(),
 		PuncFeature(), RomanNumFeature(), AlphaNumericFeature(), EnglishSuffixFeature(),
 		LatinPrefixFeature(), LatinSuffixFeature(), GreekLetterFeature(),
 		DeterminerFeature(), PrepositionFeature()
@@ -147,7 +147,8 @@ def featuresByTag(labeledFilePath):
 			word = taggedWord.word
 			tag = taggedWord.tag
 			for feature in features:
-				if feature.hasFeature(word):
+				wasMatch, matchedWith = feature.hasFeature(word)
+				if wasMatch:
 					featuresByTag[tag][feature.getName()] += 1
 
 	plotProbRowGivenCol(
@@ -155,6 +156,39 @@ def featuresByTag(labeledFilePath):
 		tags, featureNames, 
 		"Features", "P(tag | feature)"
 	)
+
+def mostFrequentByFeatureAndTag(labeledFilePath):
+	lFormat = common.LabeledFormat()
+	taggedSentences = [ taggedSentence for taggedSentence in lFormat.deserialize(labeledFilePath) ]
+
+	features = [
+		AllUpperLettersFeature(), AllLowerLettersFeature(), CapitalizedFeature(), PositiveIntegerFeature(),
+		PuncFeature(), RomanNumFeature(), AlphaNumericFeature(), EnglishSuffixFeature(),
+		LatinPrefixFeature(), LatinSuffixFeature(), GreekLetterFeature(),
+		DeterminerFeature(), PrepositionFeature()
+		]
+
+	featureNames = [ feature.getName() for feature in features ]
+	tags = sorted(["I", "O", "B"])
+	featuresByTag = { t : { f : collections.Counter() for f in featureNames } for t in tags }
+
+	for taggedSentence in taggedSentences:
+		for taggedWord in taggedSentence.taggedWords:
+			word = taggedWord.word
+			tag = taggedWord.tag
+			for feature in features:
+				wasMatch, matchedWith = feature.hasFeature(word)
+				if wasMatch:
+					featuresByTag[tag][feature.getName()].update([word.lower()])
+
+	for tag in tags:
+		print("%s" % tag)
+		for feature in features:
+			mostCommon = featuresByTag[tag][feature.getName()].most_common(10)
+			print("%s\t:" % feature.getName()),
+			print(", ".join(map(lambda (word, count): "(%d) \"%s\"" % (count, word), mostCommon)))
+		
+
 
 def histInitVecGridStateTrans(labeledFilePath):
 	lFormat = common.LabeledFormat()
@@ -276,14 +310,15 @@ if __name__ == "__main__":
 	labeledFilePath = "res/genetag.labeled"
 
 	# Insights on tokens
-	histTokenLenBySemanticLabel(labeledFilePath)
-	histSymbolByTag(labeledFilePath)
-	featuresByTag(labeledFilePath)
+	#histTokenLenBySemanticLabel(labeledFilePath)
+	#histSymbolByTag(labeledFilePath)
+	#featuresByTag(labeledFilePath)
+	mostFrequentByFeatureAndTag(labeledFilePath)
 
 	# HMM insight
-	histInitVecGridStateTrans(labeledFilePath)
+	#histInitVecGridStateTrans(labeledFilePath)
 
 	# n-gram insights
-	mostCommonUnigrams(labeledFilePath)
-	mostCommonBigrams(labeledFilePath)
-	mostCommonTrigrams(labeledFilePath)
+	#mostCommonUnigrams(labeledFilePath)
+	#mostCommonBigrams(labeledFilePath)
+	#mostCommonTrigrams(labeledFilePath)
