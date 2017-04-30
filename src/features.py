@@ -10,6 +10,9 @@ class Feature:
 	def hasFeature(self, word):
 		return False, None
 
+	def rewriteWord(self, match):
+		return self.getName()
+
 	def selfSelect(self, taggedSentences, tag):
 		pass
 
@@ -92,6 +95,9 @@ class PuncFeature(RegExFeature):
 	def getRegEx(self):
 		return self.regex
 
+	def rewriteWord(self, match):
+		return match
+
 class RomanNumFeature(RegExFeature): 
 	def __init__(self):
 		# Obviously not robust and may accept false positives
@@ -103,7 +109,7 @@ class RomanNumFeature(RegExFeature):
 	def getRegEx(self):
 		return self.regex
 
-class WordPartFeature:
+class WordPartFeature(Feature):
 	def __init__(self):
 		self.accepted = None
 
@@ -135,6 +141,9 @@ class WordPartFeature:
 			accepted += map(lambda (suffix, prob) : suffix, byProbDesc[:10])
 
 		self.accepted = list(set(accepted))
+
+		print("%s:\t" % self.getName()),
+		print self.accepted
 
 	def hasFeature(self, word):
 		candidates = self.accepted
@@ -194,7 +203,7 @@ class GreekLetterFeature(InSetFeature):
 
 class DeterminerFeature(InSetFeature):
 	def getCandidates(self):
-		return ["the", "a", "an", "this", "that", "these", "those"] # obviously more
+		return ["all", "alotta", "anny", "anoda", "anotha", "another", "any", "atta", "beaucoup", "bofe", "bolth", "both", "bothe", "certain", "couple", "dat", "dem", "dese", "dis", "each", "ebery", "either", "em", "enny", "enough", "enuf", "enuff", "eny", "eeuerie", "euery", "ever", "everie", "everwhat", "every", "few", "fewer", "fewest", "fewscore", "fiew", "he", "hecka", "hella", "her", "hes", "hevery", "his", "hits", "how many", "how much", "hundredsome", "hys", "it", "itits", "last", "least", "little", "ma", "mah", "mai", "many", "manye", "me", "mickle", "more", "most", "much", "muchee", "muh", "my", "neither", "next", "nil", "no", "none", "other", "our", "overmuch", "owne", "plenty", "quodque", "said", "several", "severall", "she", "some", "such", "sufficient", "that", "thatt", "their", "them", "there", "these", "they", "theytheythilk", "thine", "this", "those", "thousandsome", "thy", "Thy", "umpteen", "us", "various", "vich", "wat", "we", "what", "whatewhatevah", "whatever", "whatevuh", "whath", "which", "whichever", "whose", "whosesoever", "whosever", "whoze", "wor", "yer", "yo", "yonder", "you", "your", "yure", "zis"]
 
 	def getName(self):
 		return "Determiner"
@@ -205,3 +214,20 @@ class PrepositionFeature(InSetFeature):
 
 	def getName(self):
 		return "Preposition"
+
+class ConjunctionFeature(InSetFeature):
+	def getCandidates(self):
+		return ["and", "or", "but", "nor", "so", "for", "yet", "after", "although", "as", "because", "before", "once", "since", "though", "till", "unless", "until", "what", "when", "whenever", "wherever", "whether", "while"]
+
+	def getName(self):
+		return "Conjunction"
+
+class KeywordFeature(InSetFeature):
+	def getCandidates(self):
+		return ["kinase", "c", "human", "mouse", "rat", "gene", "protein", "genes", "proteins", "cdna", "rdna", "dna", "family", "receptor"]
+
+	def getName(self):
+		return "Keyword"
+
+	def rewriteWord(self, match):
+		return match

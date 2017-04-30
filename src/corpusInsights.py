@@ -6,7 +6,7 @@ import operator
 import common
 import hiddenMarkovModel as hmm
 import jointFreqMatrix
-from features import AllUpperLettersFeature, AllLowerLettersFeature, CapitalizedFeature, PositiveIntegerFeature, PuncFeature, RomanNumFeature, AlphaNumericFeature, EnglishSuffixFeature, LatinPrefixFeature, LatinSuffixFeature, GreekLetterFeature, DeterminerFeature, PrepositionFeature
+from features import AllUpperLettersFeature, AllLowerLettersFeature, CapitalizedFeature, PositiveIntegerFeature, PuncFeature, RomanNumFeature, AlphaNumericFeature, EnglishSuffixFeature, LatinPrefixFeature, LatinSuffixFeature, GreekLetterFeature, DeterminerFeature, PrepositionFeature, ConjunctionFeature
 
 import numpy
 import matplotlib.pyplot as plot
@@ -132,7 +132,7 @@ def featuresByTag(labeledFilePath):
 		AllUpperLettersFeature(), AllLowerLettersFeature(), CapitalizedFeature(), PositiveIntegerFeature(),
 		PuncFeature(), RomanNumFeature(), AlphaNumericFeature(), EnglishSuffixFeature(),
 		LatinPrefixFeature(), LatinSuffixFeature(), GreekLetterFeature(),
-		DeterminerFeature(), PrepositionFeature()
+		DeterminerFeature(), PrepositionFeature(), ConjunctionFeature()
 		]
 
 	featureNames = [ feature.getName() for feature in features ]
@@ -165,12 +165,15 @@ def mostFrequentByFeatureAndTag(labeledFilePath):
 		AllUpperLettersFeature(), AllLowerLettersFeature(), CapitalizedFeature(), PositiveIntegerFeature(),
 		PuncFeature(), RomanNumFeature(), AlphaNumericFeature(), EnglishSuffixFeature(),
 		LatinPrefixFeature(), LatinSuffixFeature(), GreekLetterFeature(),
-		DeterminerFeature(), PrepositionFeature()
+		DeterminerFeature(), PrepositionFeature(), ConjunctionFeature()
 		]
 
 	featureNames = [ feature.getName() for feature in features ]
 	tags = sorted(["I", "O", "B"])
 	featuresByTag = { t : { f : collections.Counter() for f in featureNames } for t in tags }
+
+	for feature in features:
+		feature.selfSelect(taggedSentences, tags)
 
 	for taggedSentence in taggedSentences:
 		for taggedWord in taggedSentence.taggedWords:

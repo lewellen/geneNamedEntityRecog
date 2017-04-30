@@ -159,5 +159,15 @@ class PrepositionFeatureTest(unittest.TestCase, PositiveNegativeFeatureTest):
 	def getNegativeExamples(self):
 		return [ "xor", "metric", "", "foo" ]
 
+class ConjunctionFeatureTest(unittest.TestCase, PositiveNegativeFeatureTest):
+	def getFeature(self):
+		return features.ConjunctionFeature()
+
+	def getPositiveExamples(self):
+		return [ "and", "or", "but" ]
+
+	def getNegativeExamples(self):
+		return [ "xor", "metric", "", "foo" ]
+
 if __name__ == "__main__":
 	unittest.main()

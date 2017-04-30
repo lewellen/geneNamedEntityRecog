@@ -12,7 +12,7 @@ from numpy.core.defchararray import lower
 import common 
 import hiddenMarkovModel as hmm
 import evaluation
-from features import AllUpperLettersFeature, AllLowerLettersFeature, CapitalizedFeature, PositiveIntegerFeature, PuncFeature, RomanNumFeature, AlphaNumericFeature, EnglishSuffixFeature, LatinPrefixFeature, LatinSuffixFeature, GreekLetterFeature, DeterminerFeature, PrepositionFeature
+from features import AllUpperLettersFeature, AllLowerLettersFeature, CapitalizedFeature, PositiveIntegerFeature, PuncFeature, RomanNumFeature, AlphaNumericFeature, EnglishSuffixFeature, LatinPrefixFeature, LatinSuffixFeature, GreekLetterFeature, DeterminerFeature, PrepositionFeature, ConjunctionFeature, KeywordFeature
 
 class TagPredictor:
     def __init__(self, training, featurizer):
@@ -54,10 +54,12 @@ class TagPredictor:
 class Featurizer:
     def __init__(self, train):
 	self.features = [
-		AllUpperLettersFeature(), AllLowerLettersFeature(), CapitalizedFeature(), PositiveIntegerFeature(),
-		PuncFeature(), RomanNumFeature(), AlphaNumericFeature(), EnglishSuffixFeature(),
-		LatinPrefixFeature(), LatinSuffixFeature(), GreekLetterFeature(),
-		DeterminerFeature(), PrepositionFeature()
+		KeywordFeature(), PuncFeature(), # Most specific match
+		RomanNumFeature(), PositiveIntegerFeature(), GreekLetterFeature(),
+		AlphaNumericFeature(), AllUpperLettersFeature(), CapitalizedFeature(), 
+		ConjunctionFeature(), DeterminerFeature(), PrepositionFeature(), 
+		EnglishSuffixFeature(), LatinPrefixFeature(), LatinSuffixFeature(),
+		AllLowerLettersFeature() # to least specific match
 		]
 
 	tags = ["I", "O", "B"]
@@ -66,8 +68,9 @@ class Featurizer:
 
     def __call__(self, word):
 	for feature in self.features:
-		if feature.hasFeature(word):
-			yield feature.getName()
+		hasMatch, match = feature.hasFeature(word)
+		if hasMatch:
+			yield feature.rewriteWord(match)
 
     def __isNumber(self, x):
         try:
@@ -139,33 +142,68 @@ def removeTags(inputFilePath, outputFilePath):
     outputFormat.serialize(map(lambda taggedSentence: common.Sentence(taggedSentence.toWordSeq()), inputFormat.deserialize(inputFilePath)), outputFilePath)
 
 def decode(trainFilePath, testFilePath, outputFilePath):   
-    # Load the training data
-    trainFormat = common.LabeledFormat()
-    train = list(trainFormat.deserialize(trainFilePath))
+	# Load the training data
+	trainFormat = common.LabeledFormat()
+	train = list(trainFormat.deserialize(trainFilePath))
 
-    # Create a decoder that operates over (B I O) values AND tags
-    A = [common.TaggedSentence( [ common.TaggedWord(w.tag, w.tag) for w in t.taggedWords] ) for t in train]
-    decoder = createDecoder(A)
+	features = [
+		KeywordFeature(), PuncFeature(), # Most specific match
+		RomanNumFeature(), PositiveIntegerFeature(), GreekLetterFeature(),
+		AlphaNumericFeature(), AllUpperLettersFeature(), CapitalizedFeature(), 
+		ConjunctionFeature(), DeterminerFeature(), PrepositionFeature(), 
+		EnglishSuffixFeature(), LatinPrefixFeature(), LatinSuffixFeature(),
+		AllLowerLettersFeature() # to least specific match
+		]
 
-    # Load up the test data
-    testFormat = common.UnlabeledFormat()
-    test = list(testFormat.deserialize(testFilePath))
+	tags = ["I", "O", "B"]
+	for feature in features:
+		feature.selfSelect(train, tags)
 
-    # For each word in a test sentence, predict its tag
-    featurizer = Featurizer(train)
-    classifier = TagPredictor(train, featurizer)
-    B = [ common.Sentence( [ classifier.predictValue(w) for w in s.words] ) for s in test]
+	for taggedSentence in train:
+		for taggedWord in taggedSentence.taggedWords:
+			for feature in features:
+				hasMatch, match = feature.hasFeature(taggedWord.word)
+				if hasMatch:
+					taggedWord.word = feature.rewriteWord(match)
+					break
 
+	# Create a decoder that operates over (B I O) values AND tags
+	#A = [common.TaggedSentence( [ common.TaggedWord(w.tag, w.tag) for w in t.taggedWords] ) for t in train]
+	decoder = createDecoder(train)
 
-    # Decode the sentences, and then reassign the actual words to the results
-    D = map(lambda x: decoder.decode(x), B)
-    for (d, t) in zip(D, test):
-        for i in xrange(0, len(t.words)):
-            d.taggedWords[i].word = t.words[i]
+	# Load up the test data
+	testFormat = common.UnlabeledFormat()
+	test = list(testFormat.deserialize(testFilePath))
 
-    # Save to disk
-    outputFormat = trainFormat
-    outputFormat.serialize(D, outputFilePath)
+	B = []
+	for sentence in test:
+		b = []
+		for i, word in enumerate(sentence.words):
+			newWord = word
+			for feature in features:
+				hasMatch, match = feature.hasFeature(word)
+				if hasMatch:
+					newWord = feature.rewriteWord(match)
+					break
+
+			b.append(newWord)
+
+		B.append(common.Sentence(b))
+
+	# For each word in a test sentence, predict its tag
+	#featurizer = Featurizer(train)
+	#classifier = TagPredictor(train, featurizer)
+	#B = [ common.Sentence( [ classifier.predictValue(w) for w in s.words] ) for s in test]
+
+	## Decode the sentences, and then reassign the actual words to the results
+	D = map(lambda x: decoder.decode(x), B)
+	for (d, t) in zip(D, test):
+		for i in xrange(0, len(t.words)):
+			d.taggedWords[i].word = t.words[i]
+
+	# Save to disk
+	outputFormat = trainFormat
+	outputFormat.serialize(D, outputFilePath)
 
 def evaluate(testFilePath, decodedFilePath): 
     fileFormat = common.LabeledFormat()
@@ -179,17 +217,27 @@ def evaluate(testFilePath, decodedFilePath):
     numExpected = 0.0;
 
     for (t, d) in zip(test, decoded):
-        dGenes = fileFormat.getGenes(d)
-        dCount = len(dGenes)
-        numFound += dCount
+        #dGenes = fileFormat.getGenes(d)
+        #dCount = len(dGenes)
+        #numFound += dCount
         
-        tGenes = fileFormat.getGenes(t)
-        tCount = len(tGenes)
-        numExpected += tCount
+        #tGenes = fileFormat.getGenes(t)
+        #tCount = len(tGenes)
+        #numExpected += tCount
         
-        #numCorrect += min(dCount, tCount)
-        #numCorrect += len(filter(lambda (x,y): x == y, zip(dGenes, tGenes)))
-        numCorrect += len(set(dGenes).intersection(set(tGenes)))
+        ##numCorrect += min(dCount, tCount)
+        ##numCorrect += len(filter(lambda (x,y): x == y, zip(dGenes, tGenes)))
+        #numCorrect += len(set(dGenes).intersection(set(tGenes)))
+
+	# More generous partial matching
+	for (actual, predicted) in zip(t.taggedWords, d.taggedWords):
+		if not predicted.tag == "O":
+			numFound += 1
+
+		if not actual.tag == "O":
+			if actual.tag == predicted.tag:
+				numCorrect += 1
+			numExpected += 1
 
     if numFound == 0:
         print("numFound = %d, numCorrect = %d, numExpected = %d" % (numFound, numCorrect, numExpected))
