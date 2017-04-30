@@ -231,3 +231,33 @@ class KeywordFeature(InSetFeature):
 
 	def rewriteWord(self, match):
 		return match
+
+class ChemicalFormulaFeature(RegExFeature):
+	def __init__(self):
+		symbols = ["Ac", "Al", "Am", "Sb", "Ar", "As", "At", "Ba", "Bk", "Be", "Bi", "Bh", "B", "Br", "Cd", "Ca", "Cf", "C", "Ce", "Cs", "Cl", "Cr", "Co", "Cu", "Cm", "Ds", "Db", "Dy", "Es", "Er", "Eu", "Fm", "F", "Fr", "Gd", "Ga", "Ge", "Au", "Hf", "Hs", "He", "Ho", "H", "In", "I", "Ir", "Fe", "Kr", "La", "Lr", "Pb", "Li", "Lu", "Mg", "Mn", "Mt", "Md", "Hg", "Mo", "Nd", "Ne", "Np", "Ni", "Nb", "N", "No", "Os", "O", "Pd", "P", "Pt", "Pu", "Po", "K", "Pr", "Pm", "Pa", "Ra", "Rn", "Re", "Rh", "Rg", "Rb", "Ru", "Rf", "Sm", "Sc", "Sg", "Se", "Si", "Ag", "Na", "Sr", "S", "Ta", "Tc", "Te", "Tb", "Tl", "Th", "Tm", "Sn", "Ti", "W", "Uub", "Uuh", "Uuo", "Uup", "Uuq", "Uus", "Uut", "Uuu", "U", "V", "Xe", "Yb", "Y", "Zn", "Zr"]
+
+		symbols = "|".join(symbols)
+		expr = "((%s)\d*)+" % (symbols)
+		self.regex = re.compile(expr)
+
+	def getName(self):
+		return "ChemicalFormula"
+
+	def getRegEx(self):
+		return self.regex
+
+#	def hasFeature(self, word):
+#		if word is None:
+#			return False
+#
+#		S = []
+#		fullMatch = True
+#		for i, c in enumerate(word):
+#			if c == '(':
+#				S.append((i,c))
+#			elif c == ')':
+#				(j, d) = S.pop()
+#				sub = word[j + 1:i - 1]
+#				fullMatch = fullMatch and re.match(self.getRegEx(), word)
+#
+#		return fullMatch, word

@@ -6,7 +6,7 @@ import operator
 import common
 import hiddenMarkovModel as hmm
 import jointFreqMatrix
-from features import AllUpperLettersFeature, AllLowerLettersFeature, CapitalizedFeature, PositiveIntegerFeature, PuncFeature, RomanNumFeature, AlphaNumericFeature, EnglishSuffixFeature, LatinPrefixFeature, LatinSuffixFeature, GreekLetterFeature, DeterminerFeature, PrepositionFeature, ConjunctionFeature
+from features import AllUpperLettersFeature, AllLowerLettersFeature, CapitalizedFeature, PositiveIntegerFeature, PuncFeature, RomanNumFeature, AlphaNumericFeature, EnglishSuffixFeature, LatinPrefixFeature, LatinSuffixFeature, GreekLetterFeature, DeterminerFeature, PrepositionFeature, ConjunctionFeature, ChemicalFormulaFeature
 
 import numpy
 import matplotlib.pyplot as plot
@@ -132,7 +132,8 @@ def featuresByTag(labeledFilePath):
 		AllUpperLettersFeature(), AllLowerLettersFeature(), CapitalizedFeature(), PositiveIntegerFeature(),
 		PuncFeature(), RomanNumFeature(), AlphaNumericFeature(), EnglishSuffixFeature(),
 		LatinPrefixFeature(), LatinSuffixFeature(), GreekLetterFeature(),
-		DeterminerFeature(), PrepositionFeature(), ConjunctionFeature()
+		DeterminerFeature(), PrepositionFeature(), ConjunctionFeature(),
+		ChemicalFormulaFeature()
 		]
 
 	featureNames = [ feature.getName() for feature in features ]
@@ -165,7 +166,8 @@ def mostFrequentByFeatureAndTag(labeledFilePath):
 		AllUpperLettersFeature(), AllLowerLettersFeature(), CapitalizedFeature(), PositiveIntegerFeature(),
 		PuncFeature(), RomanNumFeature(), AlphaNumericFeature(), EnglishSuffixFeature(),
 		LatinPrefixFeature(), LatinSuffixFeature(), GreekLetterFeature(),
-		DeterminerFeature(), PrepositionFeature(), ConjunctionFeature()
+		DeterminerFeature(), PrepositionFeature(), ConjunctionFeature(),
+		ChemicalFormulaFeature()
 		]
 
 	featureNames = [ feature.getName() for feature in features ]
@@ -193,49 +195,6 @@ def mostFrequentByFeatureAndTag(labeledFilePath):
 		
 
 
-def histInitVecGridStateTrans(labeledFilePath):
-	lFormat = common.LabeledFormat()
-	corpusStats = hmm.CorpusStatistics(
-		[ taggedSentence for taggedSentence in lFormat.deserialize(labeledFilePath) ],
-		True
-		)
-
-	tags = corpusStats.initVec.keys()
-	sortedTags = sorted(tags)
-	numTags = len(sortedTags)
-	
-	sortedPi = [ corpusStats.initVec[k] for k in sortedTags ]
-	T = numpy.zeros((numTags, numTags))
-
-	indices = range(numTags)
-	for a in indices:
-		for p in indices:
-			# these indicies are swapped so it matches with the chart labels
-			T[p, a] = corpusStats.stateTrans[sortedTags[a]][sortedTags[p]]
-
-	f, subPlots = plot.subplots(1, 2)
-
-	subPlots[0].bar(indices, sortedPi, width=1)
-	subPlots[0].set_xticks(indices)
-	subPlots[0].set_xticklabels(sortedTags)
-	subPlots[0].set_xlabel("Tag")
-	subPlots[0].set_ylabel("P($q_0$ = tag)")
-
-	# Want to center the labels so shift indices to the right half a unit
-	indices = [ i + 0.5 for i in indices]
-
-	#subPlots[1].imshow(T, origin="lower")
-	subPlots[1].set_xticks(indices)
-	subPlots[1].set_xticklabels(sortedTags)
-	subPlots[1].set_xlabel("Tag")
-	subPlots[1].set_yticks(indices)
-	subPlots[1].set_yticklabels(sortedTags)
-	subPlots[1].set_ylabel("Next Tag")
-
-	f.colorbar(subPlots[1].pcolormesh(T), ax=subPlots[1])
-	f.tight_layout()
-
-	plot.show()
 
 def mostCommonUnigrams(labeledFilePath):
 	lFormat = common.LabeledFormat()
@@ -315,11 +274,8 @@ if __name__ == "__main__":
 	# Insights on tokens
 	#histTokenLenBySemanticLabel(labeledFilePath)
 	#histSymbolByTag(labeledFilePath)
-	#featuresByTag(labeledFilePath)
+	featuresByTag(labeledFilePath)
 	mostFrequentByFeatureAndTag(labeledFilePath)
-
-	# HMM insight
-	#histInitVecGridStateTrans(labeledFilePath)
 
 	# n-gram insights
 	#mostCommonUnigrams(labeledFilePath)

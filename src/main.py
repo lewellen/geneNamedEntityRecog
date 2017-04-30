@@ -12,7 +12,7 @@ from numpy.core.defchararray import lower
 import common 
 import hiddenMarkovModel as hmm
 import evaluation
-from features import AllUpperLettersFeature, AllLowerLettersFeature, CapitalizedFeature, PositiveIntegerFeature, PuncFeature, RomanNumFeature, AlphaNumericFeature, EnglishSuffixFeature, LatinPrefixFeature, LatinSuffixFeature, GreekLetterFeature, DeterminerFeature, PrepositionFeature, ConjunctionFeature, KeywordFeature
+from features import AllUpperLettersFeature, AllLowerLettersFeature, CapitalizedFeature, PositiveIntegerFeature, PuncFeature, RomanNumFeature, AlphaNumericFeature, EnglishSuffixFeature, LatinPrefixFeature, LatinSuffixFeature, GreekLetterFeature, DeterminerFeature, PrepositionFeature, ConjunctionFeature, KeywordFeature, ChemicalFormulaFeature
 
 class TagPredictor:
     def __init__(self, training, featurizer):
@@ -55,6 +55,7 @@ class Featurizer:
     def __init__(self, train):
 	self.features = [
 		KeywordFeature(), PuncFeature(), # Most specific match
+		ChemicalFormulaFeature(),
 		RomanNumFeature(), PositiveIntegerFeature(), GreekLetterFeature(),
 		AlphaNumericFeature(), AllUpperLettersFeature(), CapitalizedFeature(), 
 		ConjunctionFeature(), DeterminerFeature(), PrepositionFeature(), 
@@ -148,6 +149,7 @@ def decode(trainFilePath, testFilePath, outputFilePath):
 
 	features = [
 		KeywordFeature(), PuncFeature(), # Most specific match
+		ChemicalFormulaFeature(),
 		RomanNumFeature(), PositiveIntegerFeature(), GreekLetterFeature(),
 		AlphaNumericFeature(), AllUpperLettersFeature(), CapitalizedFeature(), 
 		ConjunctionFeature(), DeterminerFeature(), PrepositionFeature(), 
@@ -204,6 +206,8 @@ def decode(trainFilePath, testFilePath, outputFilePath):
 	# Save to disk
 	outputFormat = trainFormat
 	outputFormat.serialize(D, outputFilePath)
+
+	return decoder.corpusStats
 
 def evaluate(testFilePath, decodedFilePath): 
     fileFormat = common.LabeledFormat()
