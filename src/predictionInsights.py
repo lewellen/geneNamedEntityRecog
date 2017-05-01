@@ -1,11 +1,41 @@
 import collections
+import operator
+import math
+
 import common
 import evaluation
 import main
-import operator
 
 import numpy
 import matplotlib.pyplot as plot
+
+def plotLogConfusionMatrix(confusion, tags):
+	sortedTags = sorted(tags)
+	numTags = len(sortedTags)
+	indices = range(numTags)
+
+	T = numpy.zeros((numTags, numTags))
+	for a in indices:
+		for p in indices:
+			# these indices are swapped so it matches with the chart labels
+			T[a, p] = math.log(1 + sum(confusion[sortedTags[a]][sortedTags[p]].values()))
+
+	indices = range(numTags)
+	indices = [ i + 0.5 for i in indices]
+
+	f, subPlot = plot.subplots(1, 1)
+
+	subPlot.set_xticks(indices)
+	subPlot.set_xticklabels(sortedTags)
+	subPlot.set_xlabel("Predicted Label")
+	subPlot.set_yticks(indices)
+	subPlot.set_yticklabels(sortedTags)
+	subPlot.set_ylabel("Actual Label")
+
+	f.colorbar(subPlot.pcolormesh(T), ax=subPlot)
+	f.tight_layout()
+
+	plot.show()
 
 def unigramConfusion(tags, test, decoded):
 	confusion = { a : { p : collections.Counter() for p in tags } for a in tags }
@@ -28,6 +58,35 @@ def unigramConfusion(tags, test, decoded):
 			print("%s %s:\t" % (a, p)),
 			mostCommon = map(lambda (s, n): "(%d) \"%s\"" % (n, s), confusion[a][p].most_common(10))
 			print("%s" % ", ".join(mostCommon))
+
+
+	maxCount = 0
+	am, pm = None, None
+	for a in tags:
+		for p in tags:
+			if a == p:
+				continue
+
+			count = sum(confusion[a][p].values())
+			if maxCount < count:
+				maxCount = count
+				am, pm = a, p
+
+	mostConfused = confusion[am][pm].most_common(3)
+	MC = { word : collections.Counter() for (word, count) in mostConfused }
+
+	for taggedSentence in test:
+		for (prev, curr, nex) in zip(taggedSentence.taggedWords, taggedSentence.taggedWords[1:], taggedSentence.taggedWords[2:]):
+			for word, count in mostConfused:
+				if curr.word == word:
+					trigram = "%s %s %s" % (prev.word, curr.word, nex.word)
+					MC[word].update([trigram])
+
+	for word in MC:
+		print("%s\t:" % word),
+		print(MC[word].most_common(10))
+
+	plotLogConfusionMatrix(confusion, tags)
 
 def bigramConfusion(tags, test, decoded):
 	tags = [ "%s%s" % (a, b) for a in tags for b in tags ]
@@ -55,6 +114,8 @@ def bigramConfusion(tags, test, decoded):
 			print("%s %s:\t" % (a, p)),
 			mostCommon = map(lambda (s, n): "(%d) \"%s\"" % (n, s), confusion[a][p].most_common(10))
 			print("%s" % ", ".join(mostCommon))
+
+	plotLogConfusionMatrix(confusion, tags)
 
 def histInitVecGridStateTrans(corpusStats):
 	tags = corpusStats.initVec.keys()
@@ -114,6 +175,10 @@ def histEmissionProbs(corpusStats, tags):
 	plot.xlabel("Token")
 	plot.legend(loc="upper right")
 	plot.show()
+
+
+
+
 
 if __name__ == "__main__":
 	inputFilePath = "res/genetag.labeled"
