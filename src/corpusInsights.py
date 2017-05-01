@@ -6,11 +6,10 @@ import operator
 import common
 import hiddenMarkovModel as hmm
 import jointFreqMatrix
-import features as featuresModule
+import unigramTraits as unigramTraitsModule
 
 import numpy
 import matplotlib.pyplot as plot
-
 
 def histTokenLenBySemanticLabel(labeledFilePath):
 	wordsByTag = { "Gene" : [], "NotGene" : [] }
@@ -125,59 +124,59 @@ def plotProbRowGivenCol(D, rowNames, colNames, xlabel, ylabel):
 	plot.legend(loc = "upper right") 
 	plot.show()
 
-def featuresByTag(labeledFilePath):
+def unigramTraitsByTag(labeledFilePath):
 	lFormat = common.LabeledFormat()
 	taggedSentences = [ taggedSentence for taggedSentence in lFormat.deserialize(labeledFilePath) ]
 
-	features = featuresModule.featureList
-	featureNames = [ feature.getName() for feature in features ]
+	unigramTraits = unigramTraitsModule.unigramTraitList
+	traitNames = [ unigramTrait.getName() for unigramTrait in unigramTraits ]
 	tags = sorted(["I", "O", "B"])
-	featuresByTag = { t : { f : 0 for f in featureNames } for t in tags }
+	unigramTraitsByTag = { t : { f : 0 for f in traitNames } for t in tags }
 
-	for feature in features:
-		feature.selfSelect(taggedSentences, tags)
+	for unigramTrait in unigramTraits:
+		unigramTrait.selfSelect(taggedSentences, tags)
 
 	for taggedSentence in taggedSentences:
 		for taggedWord in taggedSentence.taggedWords:
 			word = taggedWord.word
 			tag = taggedWord.tag
-			for feature in features:
-				wasMatch, matchedWith = feature.isAMatch(word)
+			for unigramTrait in unigramTraits:
+				wasMatch, matchedWith = unigramTrait.isAMatch(word)
 				if wasMatch:
-					featuresByTag[tag][feature.getName()] += 1
+					unigramTraitsByTag[tag][unigramTrait.getName()] += 1
 
 	plotProbRowGivenCol(
-		featuresByTag, 
-		tags, featureNames, 
-		"Features", "P(tag | feature)"
+		unigramTraitsByTag, 
+		tags, traitNames, 
+		"Unigram Traits", "P(tag | unigramTrait)"
 	)
 
-def mostFrequentByFeatureAndTag(labeledFilePath):
+def mostFrequentByUnigramTraitAndTag(labeledFilePath):
 	lFormat = common.LabeledFormat()
 	taggedSentences = [ taggedSentence for taggedSentence in lFormat.deserialize(labeledFilePath) ]
 
-	features = featuresModule.featureList
-	featureNames = [ feature.getName() for feature in features ]
+	unigramTraits = unigramTraitsModule.unigramTraitList
+	traitNames = [ unigramTrait.getName() for unigramTrait in unigramTraits ]
 	tags = sorted(["I", "O", "B"])
-	featuresByTag = { t : { f : collections.Counter() for f in featureNames } for t in tags }
+	unigramTraitsByTag = { t : { f : collections.Counter() for f in traitNames } for t in tags }
 
-	for feature in features:
-		feature.selfSelect(taggedSentences, tags)
+	for unigramTrait in unigramTraits:
+		unigramTrait.selfSelect(taggedSentences, tags)
 
 	for taggedSentence in taggedSentences:
 		for taggedWord in taggedSentence.taggedWords:
 			word = taggedWord.word
 			tag = taggedWord.tag
-			for feature in features:
-				wasMatch, matchedWith = feature.isAMatch(word)
+			for unigramTrait in unigramTraits:
+				wasMatch, matchedWith = unigramTrait.isAMatch(word)
 				if wasMatch:
-					featuresByTag[tag][feature.getName()].update([word])
+					unigramTraitsByTag[tag][unigramTrait.getName()].update([word])
 
 	for tag in tags:
 		print("%s" % tag)
-		for feature in features:
-			mostCommon = featuresByTag[tag][feature.getName()].most_common(10)
-			print("%s\t:" % feature.getName()),
+		for unigramTrait in unigramTraits:
+			mostCommon = unigramTraitsByTag[tag][unigramTrait.getName()].most_common(10)
+			print("%s\t:" % unigramTrait.getName()),
 			print(", ".join(map(lambda (word, count): "(%d) \"%s\"" % (count, word), mostCommon)))
 		
 
@@ -261,8 +260,8 @@ if __name__ == "__main__":
 	# Insights on tokens
 	#histTokenLenBySemanticLabel(labeledFilePath)
 	#histSymbolByTag(labeledFilePath)
-	featuresByTag(labeledFilePath)
-	mostFrequentByFeatureAndTag(labeledFilePath)
+	unigramTraitsByTag(labeledFilePath)
+	mostFrequentByUnigramTraitAndTag(labeledFilePath)
 
 	# n-gram insights
 	#mostCommonUnigrams(labeledFilePath)

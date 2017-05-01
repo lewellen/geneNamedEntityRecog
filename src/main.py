@@ -12,7 +12,7 @@ from numpy.core.defchararray import lower
 import common 
 import hiddenMarkovModel as hmm
 import evaluation
-import features as featuresModule
+import unigramTraits as unigramTraitsModule
 
 class TagPredictor:
     def __init__(self, training, featurizer):
@@ -53,17 +53,17 @@ class TagPredictor:
 
 class Featurizer:
     def __init__(self, train):
-	self.features = featuresModule.featureList
+	self.unigramTraits = unigramTraitsModule.unigramTraitList
 
 	tags = ["I", "O", "B"]
-	for feature in self.features:
-		feature.selfSelect(train, tags)
+	for unigramTrait in self.unigramTraits:
+		unigramTrait.selfSelect(train, tags)
 
     def __call__(self, word):
-	for feature in self.features:
-		hasMatch, match = feature.isAMatch(word)
+	for unigramTrait in self.unigramTraits:
+		hasMatch, match = unigramTrait.isAMatch(word)
 		if hasMatch:
-			yield feature.rewriteWord(match)
+			yield unigramTrait.rewriteWord(match)
 
     def __isNumber(self, x):
         try:
@@ -139,18 +139,18 @@ def decode(trainFilePath, testFilePath, outputFilePath):
 	trainFormat = common.LabeledFormat()
 	train = list(trainFormat.deserialize(trainFilePath))
 
-	features = featuresModule.featureList
+	unigramTraits = unigramTraitsModule.unigramTraitList
 
 	tags = ["I", "O", "B"]
-	for feature in features:
-		feature.selfSelect(train, tags)
+	for unigramTrait in unigramTraits:
+		unigramTrait.selfSelect(train, tags)
 
 	for taggedSentence in train:
 		for taggedWord in taggedSentence.taggedWords:
-			for feature in features:
-				hasMatch, match = feature.isAMatch(taggedWord.word)
+			for unigramTrait in unigramTraits:
+				hasMatch, match = unigramTrait.isAMatch(taggedWord.word)
 				if hasMatch:
-					taggedWord.word = feature.rewriteWord(match)
+					taggedWord.word = unigramTrait.rewriteWord(match)
 					break
 
 	# Create a decoder that operates over (B I O) values AND tags
@@ -166,10 +166,10 @@ def decode(trainFilePath, testFilePath, outputFilePath):
 		b = []
 		for i, word in enumerate(sentence.words):
 			newWord = word
-			for feature in features:
-				hasMatch, match = feature.isAMatch(word)
+			for unigramTrait in unigramTraits:
+				hasMatch, match = unigramTrait.isAMatch(word)
 				if hasMatch:
-					newWord = feature.rewriteWord(match)
+					newWord = unigramTrait.rewriteWord(match)
 					break
 
 			b.append(newWord)

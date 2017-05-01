@@ -67,7 +67,7 @@ def histInitVecGridStateTrans(corpusStats):
 	indices = range(numTags)
 	for a in indices:
 		for p in indices:
-			# these indicies are swapped so it matches with the chart labels
+			# these indices are swapped so it matches with the chart labels
 			T[p, a] = corpusStats.stateTrans[sortedTags[a]][sortedTags[p]]
 
 	f, subPlots = plot.subplots(1, 2)
@@ -96,16 +96,22 @@ def histInitVecGridStateTrans(corpusStats):
 
 def histEmissionProbs(corpusStats, tags):
 	E = corpusStats.wordGivenTag
+	print E
+
+	# Get all the unique keys in ascending order
+	allKeys = sorted(list(set([ key for tag in tags for key in E[tag] ])))
+	indices = range(len(allKeys))
+	indexByKey = { key : index for (key, index) in zip(allKeys, indices) }
+	plot.xticks(indices, allKeys)
 
 	for tag in tags:
-		sortedKeys = sorted(E[tag].keys())
-		sortedValues = [ E[tag][key] for key in sortedKeys ]
-		indices = range(len(sortedKeys))
+		tagKeys = sorted(E[tag].keys())
+		tagValues = [ E[tag][key] for key in tagKeys ]
+		tagIndices = [ indexByKey[key] for key in tagKeys ]
+		plot.bar(tagIndices, tagValues, label=tag, alpha=0.5, width=.8)
 
-		plot.bar(indices, sortedValues, label=tag, alpha=0.5, width=.8)
-		plot.xticks(indices, sortedKeys)
-
-	plot.ylabel("P(tag | token)")
+	plot.yscale('log')
+	plot.ylabel("log P(tag | token)")
 	plot.xlabel("Token")
 	plot.legend(loc="upper right")
 	plot.show()
