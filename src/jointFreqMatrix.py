@@ -1,24 +1,28 @@
 
 def toProbColGivenRow(D, rowNames, colNames):
-	E = D
+	E = { row : { col : 0 for col in colNames } for row in rowNames}
 	for r in rowNames:
 		s = 0.0
 		for c in colNames:
-			s += E[r][c]
+			if r in D and c in D[r]:
+				s += D[r][c]
 
 		if s > 0:
 			for c in colNames:
-				E[r][c] /= s
+				if r in D and c in D[r]:
+					E[r][c] = D[r][c] / s
 	return E
 
 def toProbRowGivenCol(D, rowNames, colNames):
-	E = D
+	E = { row : { col : 0 for col in colNames } for row in rowNames}
 	for c in colNames:
 		s = 0.0
 		for r in rowNames:
-			s += E[r][c]
+			if r in D and c in D[r]:
+				s += D[r][c]
 
 		if s > 0:
 			for r in rowNames:
-				E[r][c] /= s
+				if r in D and c in D[r]:
+					E[r][c] = D[r][c] / s
 	return E

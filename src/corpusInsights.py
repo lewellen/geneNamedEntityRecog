@@ -11,10 +11,65 @@ import unigramTraits as unigramTraitsModule
 import numpy
 import matplotlib.pyplot as plot
 
-def histTokenLenBySemanticLabel(labeledFilePath):
+def plotProbColGivenRow(D, rowNames, colNames, xlabel, ylabel):
+	# Create a bar chart where bars representing each row are presented 
+	# side-by-side for each column in the nested dictionary D.
+
+	sortedColNames = sorted(colNames)
+	numCols = len(sortedColNames)
+	indices = range(numCols)
+
+	# P( col | row )
+	E = jointFreqMatrix.toProbColGivenRow(D, rowNames, colNames)
+
+	colWidth = 0.95
+	barWidth = (colWidth / float(len(rowNames)))
+
+	for rowNum, r in enumerate(rowNames):
+		offsets = [ i + colWidth * (rowNum + 0 - 0.5 * len(rowNames)) / float(len(rowNames) - 1.0) for i in indices]
+		sortedValues = [ E[r][c] for c in sortedColNames ]
+		plot.bar(offsets, sortedValues, label = r, width = barWidth)
+
+	plot.xticks(indices, sortedColNames)
+
+	plot.xlabel(xlabel)
+	plot.ylabel(ylabel)
+	plot.legend(loc = "upper right") 
+	plot.show()
+
+def plotProbRowGivenCol(D, rowNames, colNames, xlabel, ylabel):
+	# Create a stacked bar chart where bars represent each row are presentd stacked
+	# for each column in the nested dictionary D. Will auto normalize so range is
+	# [0,1].
+
+	presentColumns = {}
+	for r in rowNames:
+		for c in colNames:
+			if D[r][c] > 0:
+				presentColumns.update({c : 0})
+
+	sortedColNames = sorted(presentColumns.keys())
+	numCols = len(sortedColNames)
+	indices = range(numCols)
+
+	# P( row | col )
+	E = jointFreqMatrix.toProbRowGivenCol(D, rowNames, colNames)
+
+	prev = numpy.zeros(numCols)
+	for r in rowNames:
+		sortedValues = [ E[r][c] for c in sortedColNames ]
+		plot.bar(indices, sortedValues, label=r, bottom=prev, width=1)
+		plot.xticks(indices, sortedColNames, rotation=70)
+		prev = numpy.add(prev, sortedValues)
+
+	plot.xlabel(xlabel)
+	plot.ylabel(ylabel)
+	plot.legend(loc = "upper right") 
+	plot.show()
+
+def histTokenLenBySemanticLabel(train, tags):
 	wordsByTag = { "Gene" : [], "NotGene" : [] }
-	lFormat = common.LabeledFormat()
-	for taggedSentence in lFormat.deserialize(labeledFilePath):
+	for taggedSentence in train:
 		for taggedWord in taggedSentence.taggedWords:
 			tag = "Gene"
 			if taggedWord.tag == "O":
@@ -33,110 +88,28 @@ def histTokenLenBySemanticLabel(labeledFilePath):
 	plot.legend(loc = "upper right") 
 	plot.show()
 
-def histSymbolByTag(labeledFilePath):
-	tags = [ "I", "O", "B" ]
-
-	symbolsByTag = { tag : { chr(i) : 0 for i in xrange(33, 127) } for tag in tags }
-
-	labeledFilePath = "res/genetag.labeled"
-	lFormat = common.LabeledFormat()
-	for taggedSentence in lFormat.deserialize(labeledFilePath):
+def histSymbolByTag(train, tags):
+	symbols = map(lambda x : chr(x), xrange(33, 127))
+	symbolsByTag = { tag : { symbol : 0 for symbol in symbols } for tag in tags }
+	for taggedSentence in train:
 		for taggedWord in taggedSentence.taggedWords:
 			for letter in taggedWord.word:
 				symbolsByTag[taggedWord.tag][letter] += 1
 
-	for i in xrange(33, 127):
-		s = 0.0
-		for tag in symbolsByTag:
-			s += symbolsByTag[tag][chr(i)]
+	plotProbRowGivenCol(
+		symbolsByTag, 
+		tags, symbols,
+		"Symbol", "P(tag | symbol)"
+	)
 
-		if s > 0:
-			for tag in symbolsByTag:
-				symbolsByTag[tag][chr(i)] /= s
-
-	prev = numpy.array( [ 0 for x in xrange(33, 127) ] )
-	for tag in symbolsByTag:
-		S = symbolsByTag[tag]
-		sortedKeys = sorted(S.keys())
-		sortedValuesByKeys = [ S[k] for k in sortedKeys ]
-		
-		columns = range(len(sortedKeys))
-		plot.bar(columns, sortedValuesByKeys, label=tag, bottom=prev, width=1)
-		plot.xticks(columns, sortedKeys)
-
-		prev = numpy.add(prev, sortedValuesByKeys)
-
-	plot.ylabel("P(char | tag)")
-	plot.xlabel("Symbol")
-	plot.legend(loc = "upper right") 
-	plot.show()
-
-def plotProbColGivenRow(D, rowNames, colNames, xlabel, ylabel):
-	sortedColNames = sorted(colNames)
-	numCols = len(sortedColNames)
-	indices = range(numCols)
-
-	# P( col | row )
-	E = jointToProbColGivenRow(D, rowNames, colNames)
-
-	colWidth = 0.95
-	barWidth = (colWidth / float(len(rowNames)))
-
-	
-
-	for rowNum, r in enumerate(rowNames):
-		offsets = [ i + colWidth * (rowNum + 0 - 0.5 * len(rowNames)) / float(len(rowNames) - 1.0) for i in indices]
-		sortedValues = [ E[r][c] for c in sortedColNames ]
-		plot.bar(offsets, sortedValues, label = r, width = barWidth)
-
-	plot.xticks(indices, sortedColNames)
-
-	plot.xlabel(xlabel)
-	plot.ylabel(ylabel)
-	plot.legend(loc = "upper right") 
-	plot.show()
-
-
-def plotProbRowGivenCol(D, rowNames, colNames, xlabel, ylabel):
-	presentColumns = {}
-	for r in rowNames:
-		for c in colNames:
-			if D[r][c] > 0:
-				presentColumns.update({c : 0})
-
-	sortedColNames = sorted(presentColumns.keys())
-	numCols = len(sortedColNames)
-	indices = range(numCols)
-
-	# P( row | col )
-	E = jointFreqMatrix.toProbRowGivenCol(D, rowNames, colNames)
-
-	prev = numpy.zeros(numCols)
-
-	for r in rowNames:
-		sortedValues = [ E[r][c] for c in sortedColNames ]
-		plot.bar(indices, sortedValues, label=r, bottom=prev, width=1)
-		plot.xticks(indices, sortedColNames, rotation=70)
-		prev = numpy.add(prev, sortedValues)
-
-	plot.xlabel(xlabel)
-	plot.ylabel(ylabel)
-	plot.legend(loc = "upper right") 
-	plot.show()
-
-def unigramTraitsByTag(labeledFilePath):
-	lFormat = common.LabeledFormat()
-	taggedSentences = [ taggedSentence for taggedSentence in lFormat.deserialize(labeledFilePath) ]
-
+def unigramTraitsByTag(train, tags):
 	unigramTraits = unigramTraitsModule.unigramTraitList
 	traitNames = [ unigramTrait.getName() for unigramTrait in unigramTraits ]
-	tags = sorted(["I", "O", "B"])
-	unigramTraitsByTag = { t : { f : 0 for f in traitNames } for t in tags }
-
 	for unigramTrait in unigramTraits:
-		unigramTrait.selfSelect(taggedSentences, tags)
+		unigramTrait.selfSelect(train, tags)
 
-	for taggedSentence in taggedSentences:
+	unigramTraitsByTag = { t : { f : 0 for f in traitNames } for t in tags }
+	for taggedSentence in train:
 		for taggedWord in taggedSentence.taggedWords:
 			word = taggedWord.word
 			tag = taggedWord.tag
@@ -151,19 +124,14 @@ def unigramTraitsByTag(labeledFilePath):
 		"Unigram Traits", "P(tag | unigramTrait)"
 	)
 
-def mostFrequentByUnigramTraitAndTag(labeledFilePath):
-	lFormat = common.LabeledFormat()
-	taggedSentences = [ taggedSentence for taggedSentence in lFormat.deserialize(labeledFilePath) ]
-
+def mostFrequentByUnigramTraitAndTag(train, tags):
 	unigramTraits = unigramTraitsModule.unigramTraitList
 	traitNames = [ unigramTrait.getName() for unigramTrait in unigramTraits ]
-	tags = sorted(["I", "O", "B"])
-	unigramTraitsByTag = { t : { f : collections.Counter() for f in traitNames } for t in tags }
-
 	for unigramTrait in unigramTraits:
-		unigramTrait.selfSelect(taggedSentences, tags)
+		unigramTrait.selfSelect(train, tags)
 
-	for taggedSentence in taggedSentences:
+	unigramTraitsByTag = { t : { f : collections.Counter() for f in traitNames } for t in tags }
+	for taggedSentence in train:
 		for taggedWord in taggedSentence.taggedWords:
 			word = taggedWord.word
 			tag = taggedWord.tag
@@ -178,48 +146,24 @@ def mostFrequentByUnigramTraitAndTag(labeledFilePath):
 			mostCommon = unigramTraitsByTag[tag][unigramTrait.getName()].most_common(10)
 			print("%s\t:" % unigramTrait.getName()),
 			print(", ".join(map(lambda (word, count): "(%d) \"%s\"" % (count, word), mostCommon)))
-		
 
+def mostCommonUnigrams(train, tags):
+	unigrams = { v : collections.Counter() for v in tags }
+	for taggedSentence in train:
+		W = taggedSentence.taggedWords
+		for u in W:
+			unigram = u.word
+			unigrams[u.tag].update([unigram])
 
+	for u in tags:
+		mostCommon = unigrams[u].most_common(10)
+		mostCommon = map(lambda (unigram, freq) : "\"%s\"" % unigram, mostCommon)
+		summary = ", ".join(mostCommon)
+		print("%s: %s" % (u, summary))
 
-def mostCommonUnigrams(labeledFilePath):
-	lFormat = common.LabeledFormat()
-	corpusStats = hmm.CorpusStatistics(
-		[ taggedSentence for taggedSentence in lFormat.deserialize(labeledFilePath) ],
-		True	
-		)
-
-	numProbs = 10
-	numExamplesPerProb = 5
-	
-	for tag in corpusStats.wordGivenTag:
-		print("%s" % tag)
-
-		wordsByProb = {}
-		for word in corpusStats.wordGivenTag[tag]:
-			prob = round(corpusStats.wordGivenTag[tag][word], 3)
-			if not prob in wordsByProb:
-				wordsByProb.update({ prob : [] })
-
-			wordsByProb[prob].append(word)
-
-		descProbs = sorted(wordsByProb.keys(), reverse=True)
-		topProbs = descProbs[:numProbs]
-		for prob in topProbs:
-			print("\t%.3f\t(%d): %s" % (
-				prob, 
-				len(wordsByProb[prob]), 
-				", ".join(wordsByProb[prob][:numExamplesPerProb])
-			))
-
-def mostCommonBigrams(labeledFilePath):
-	tags = sorted(["I", "O", "B"])
-	indices = range(len(tags))
-
+def mostCommonBigrams(train, tags):
 	bigrams = { u : { v : collections.Counter() for v in tags } for u in tags }
-
-	lFormat = common.LabeledFormat()
-	for taggedSentence in lFormat.deserialize(labeledFilePath):
+	for taggedSentence in train:
 		W = taggedSentence.taggedWords
 		for (u, v) in zip(W, W[1:]):
 			bigram = "%s %s" % (u.word, v.word)
@@ -233,14 +177,9 @@ def mostCommonBigrams(labeledFilePath):
 			print("%s %s: %s" % (u, v, summary))
 
 
-def mostCommonTrigrams(labeledFilePath):
-	tags = sorted(["I", "O", "B"])
-	indices = range(len(tags))
-
+def mostCommonTrigrams(train, tags):
 	trigrams = { u : { v : { w : collections.Counter() for w in tags } for v in tags } for u in tags }
-
-	lFormat = common.LabeledFormat()
-	for taggedSentence in lFormat.deserialize(labeledFilePath):
+	for taggedSentence in train:
 		W = taggedSentence.taggedWords
 		for (u, v, w) in zip(W, W[1:], W[2:]):
 			trigram = "%s %s %s" % (u.word, v.word, w.word)
@@ -256,14 +195,17 @@ def mostCommonTrigrams(labeledFilePath):
 
 if __name__ == "__main__":
 	labeledFilePath = "res/genetag.labeled"
+	lFormat = common.LabeledFormat()
+	train = list(lFormat.deserialize(labeledFilePath))
+	tags = sorted(["I", "O", "B"])
 
 	# Insights on tokens
-	#histTokenLenBySemanticLabel(labeledFilePath)
-	#histSymbolByTag(labeledFilePath)
-	unigramTraitsByTag(labeledFilePath)
-	mostFrequentByUnigramTraitAndTag(labeledFilePath)
+	histTokenLenBySemanticLabel(train, tags)
+	histSymbolByTag(train, tags)
+	unigramTraitsByTag(train, tags)
+	mostFrequentByUnigramTraitAndTag(train, tags)
 
 	# n-gram insights
-	#mostCommonUnigrams(labeledFilePath)
-	#mostCommonBigrams(labeledFilePath)
-	#mostCommonTrigrams(labeledFilePath)
+	mostCommonUnigrams(train, tags)
+	mostCommonBigrams(train, tags)
+	mostCommonTrigrams(train, tags)

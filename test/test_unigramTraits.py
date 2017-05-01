@@ -74,10 +74,10 @@ class PositiveIntegerUnigramTraitTest(unittest.TestCase, PositiveNegativeUnigram
 		return unigramTraits.PositiveIntegerUnigramTrait()
 
 	def getPositiveExamples(self):
-		return [ "1", "+2", "3", "+45", "67", "+8910" ]
+		return [ "1", "+2", "3", "+45", "67", "+8910", "1,234", "1,234,567" ]
 
 	def getNegativeExamples(self):
-		return [ "", "0.1", "-1", "foo", "inf", "one", "" ]
+		return [ "", "0.1", "-1", "foo", "inf", "one", "", "1,0", "123,67" ]
 
 class PositiveRealUnigramTraitTest(unittest.TestCase, PositiveNegativeUnigramTraitTest):
 	def getUnigramTrait(self):

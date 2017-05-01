@@ -77,7 +77,7 @@ class CapitalizedUnigramTrait(RegExUnigramTrait):
 
 class PositiveIntegerUnigramTrait(RegExUnigramTrait):
 	def __init__(self):
-		self.regex = re.compile("^\+?[1-9][0-9]*$")
+		self.regex = re.compile("^\+?(\d+|\d+(,\d{3})+)$")
 
 	def getName(self):
 		return "PositiveInteger"
@@ -87,7 +87,7 @@ class PositiveIntegerUnigramTrait(RegExUnigramTrait):
 
 class PositiveRealUnigramTrait(RegExUnigramTrait):
 	def __init__(self):
-		self.regex = re.compile("^\+?[0-9]+\.[0-9]+$")
+		self.regex = re.compile("^\+?[0-9]*\.[0-9]+$")
 
 	def getName(self):
 		return "PositiveReal"

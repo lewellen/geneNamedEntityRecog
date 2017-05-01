@@ -96,13 +96,12 @@ def histInitVecGridStateTrans(corpusStats):
 
 def histEmissionProbs(corpusStats, tags):
 	E = corpusStats.wordGivenTag
-	print E
 
 	# Get all the unique keys in ascending order
 	allKeys = sorted(list(set([ key for tag in tags for key in E[tag] ])))
 	indices = range(len(allKeys))
 	indexByKey = { key : index for (key, index) in zip(allKeys, indices) }
-	plot.xticks(indices, allKeys)
+	plot.xticks(indices, allKeys, rotation=90)
 
 	for tag in tags:
 		tagKeys = sorted(E[tag].keys())
