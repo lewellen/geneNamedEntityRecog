@@ -12,7 +12,7 @@ from numpy.core.defchararray import lower
 import common 
 import hiddenMarkovModel as hmm
 import evaluation
-from features import AllUpperLettersFeature, AllLowerLettersFeature, CapitalizedFeature, PositiveIntegerFeature, PuncFeature, RomanNumFeature, AlphaNumericFeature, EnglishSuffixFeature, LatinPrefixFeature, LatinSuffixFeature, GreekLetterFeature, DeterminerFeature, PrepositionFeature, ConjunctionFeature, KeywordFeature, ChemicalFormulaFeature
+import features as featuresModule
 
 class TagPredictor:
     def __init__(self, training, featurizer):
@@ -53,15 +53,7 @@ class TagPredictor:
 
 class Featurizer:
     def __init__(self, train):
-	self.features = [
-		KeywordFeature(), PuncFeature(), # Most specific match
-		ChemicalFormulaFeature(),
-		RomanNumFeature(), PositiveIntegerFeature(), GreekLetterFeature(),
-		AlphaNumericFeature(), AllUpperLettersFeature(), CapitalizedFeature(), 
-		ConjunctionFeature(), DeterminerFeature(), PrepositionFeature(), 
-		EnglishSuffixFeature(), LatinPrefixFeature(), LatinSuffixFeature(),
-		AllLowerLettersFeature() # to least specific match
-		]
+	self.features = featuresModule.featureList
 
 	tags = ["I", "O", "B"]
 	for feature in self.features:
@@ -69,7 +61,7 @@ class Featurizer:
 
     def __call__(self, word):
 	for feature in self.features:
-		hasMatch, match = feature.hasFeature(word)
+		hasMatch, match = feature.isAMatch(word)
 		if hasMatch:
 			yield feature.rewriteWord(match)
 
@@ -147,15 +139,7 @@ def decode(trainFilePath, testFilePath, outputFilePath):
 	trainFormat = common.LabeledFormat()
 	train = list(trainFormat.deserialize(trainFilePath))
 
-	features = [
-		KeywordFeature(), PuncFeature(), # Most specific match
-		ChemicalFormulaFeature(),
-		RomanNumFeature(), PositiveIntegerFeature(), GreekLetterFeature(),
-		AlphaNumericFeature(), AllUpperLettersFeature(), CapitalizedFeature(), 
-		ConjunctionFeature(), DeterminerFeature(), PrepositionFeature(), 
-		EnglishSuffixFeature(), LatinPrefixFeature(), LatinSuffixFeature(),
-		AllLowerLettersFeature() # to least specific match
-		]
+	features = featuresModule.featureList
 
 	tags = ["I", "O", "B"]
 	for feature in features:
@@ -164,7 +148,7 @@ def decode(trainFilePath, testFilePath, outputFilePath):
 	for taggedSentence in train:
 		for taggedWord in taggedSentence.taggedWords:
 			for feature in features:
-				hasMatch, match = feature.hasFeature(taggedWord.word)
+				hasMatch, match = feature.isAMatch(taggedWord.word)
 				if hasMatch:
 					taggedWord.word = feature.rewriteWord(match)
 					break
@@ -183,7 +167,7 @@ def decode(trainFilePath, testFilePath, outputFilePath):
 		for i, word in enumerate(sentence.words):
 			newWord = word
 			for feature in features:
-				hasMatch, match = feature.hasFeature(word)
+				hasMatch, match = feature.isAMatch(word)
 				if hasMatch:
 					newWord = feature.rewriteWord(match)
 					break

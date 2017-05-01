@@ -6,7 +6,7 @@ import operator
 import common
 import hiddenMarkovModel as hmm
 import jointFreqMatrix
-from features import AllUpperLettersFeature, AllLowerLettersFeature, CapitalizedFeature, PositiveIntegerFeature, PuncFeature, RomanNumFeature, AlphaNumericFeature, EnglishSuffixFeature, LatinPrefixFeature, LatinSuffixFeature, GreekLetterFeature, DeterminerFeature, PrepositionFeature, ConjunctionFeature, ChemicalFormulaFeature
+import features as featuresModule
 
 import numpy
 import matplotlib.pyplot as plot
@@ -113,10 +113,11 @@ def plotProbRowGivenCol(D, rowNames, colNames, xlabel, ylabel):
 	E = jointFreqMatrix.toProbRowGivenCol(D, rowNames, colNames)
 
 	prev = numpy.zeros(numCols)
+
 	for r in rowNames:
 		sortedValues = [ E[r][c] for c in sortedColNames ]
 		plot.bar(indices, sortedValues, label=r, bottom=prev, width=1)
-		plot.xticks(indices, sortedColNames)
+		plot.xticks(indices, sortedColNames, rotation=70)
 		prev = numpy.add(prev, sortedValues)
 
 	plot.xlabel(xlabel)
@@ -128,14 +129,7 @@ def featuresByTag(labeledFilePath):
 	lFormat = common.LabeledFormat()
 	taggedSentences = [ taggedSentence for taggedSentence in lFormat.deserialize(labeledFilePath) ]
 
-	features = [
-		AllUpperLettersFeature(), AllLowerLettersFeature(), CapitalizedFeature(), PositiveIntegerFeature(),
-		PuncFeature(), RomanNumFeature(), AlphaNumericFeature(), EnglishSuffixFeature(),
-		LatinPrefixFeature(), LatinSuffixFeature(), GreekLetterFeature(),
-		DeterminerFeature(), PrepositionFeature(), ConjunctionFeature(),
-		ChemicalFormulaFeature()
-		]
-
+	features = featuresModule.featureList
 	featureNames = [ feature.getName() for feature in features ]
 	tags = sorted(["I", "O", "B"])
 	featuresByTag = { t : { f : 0 for f in featureNames } for t in tags }
@@ -148,7 +142,7 @@ def featuresByTag(labeledFilePath):
 			word = taggedWord.word
 			tag = taggedWord.tag
 			for feature in features:
-				wasMatch, matchedWith = feature.hasFeature(word)
+				wasMatch, matchedWith = feature.isAMatch(word)
 				if wasMatch:
 					featuresByTag[tag][feature.getName()] += 1
 
@@ -162,14 +156,7 @@ def mostFrequentByFeatureAndTag(labeledFilePath):
 	lFormat = common.LabeledFormat()
 	taggedSentences = [ taggedSentence for taggedSentence in lFormat.deserialize(labeledFilePath) ]
 
-	features = [
-		AllUpperLettersFeature(), AllLowerLettersFeature(), CapitalizedFeature(), PositiveIntegerFeature(),
-		PuncFeature(), RomanNumFeature(), AlphaNumericFeature(), EnglishSuffixFeature(),
-		LatinPrefixFeature(), LatinSuffixFeature(), GreekLetterFeature(),
-		DeterminerFeature(), PrepositionFeature(), ConjunctionFeature(),
-		ChemicalFormulaFeature()
-		]
-
+	features = featuresModule.featureList
 	featureNames = [ feature.getName() for feature in features ]
 	tags = sorted(["I", "O", "B"])
 	featuresByTag = { t : { f : collections.Counter() for f in featureNames } for t in tags }
@@ -182,9 +169,9 @@ def mostFrequentByFeatureAndTag(labeledFilePath):
 			word = taggedWord.word
 			tag = taggedWord.tag
 			for feature in features:
-				wasMatch, matchedWith = feature.hasFeature(word)
+				wasMatch, matchedWith = feature.isAMatch(word)
 				if wasMatch:
-					featuresByTag[tag][feature.getName()].update([word.lower()])
+					featuresByTag[tag][feature.getName()].update([word])
 
 	for tag in tags:
 		print("%s" % tag)

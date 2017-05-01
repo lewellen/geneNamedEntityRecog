@@ -7,7 +7,7 @@ class Feature:
 	def getName(self):
 		return None
 
-	def hasFeature(self, word):
+	def isAMatch(self, word):
 		return False, None
 
 	def rewriteWord(self, match):
@@ -17,7 +17,7 @@ class Feature:
 		pass
 
 class RegExFeature(Feature):
-	def hasFeature(self, word):
+	def isAMatch(self, word):
 		if word is None:
 			return False
 
@@ -57,7 +57,7 @@ class AlphaNumericFeature(RegExFeature):
 	def getRegEx(self):
 		return None
 
-	def hasFeature(self, word):
+	def isAMatch(self, word):
 		if word is None:
 			return False
 
@@ -145,7 +145,7 @@ class WordPartFeature(Feature):
 		print("%s:\t" % self.getName()),
 		print self.accepted
 
-	def hasFeature(self, word):
+	def isAMatch(self, word):
 		candidates = self.accepted
 		if candidates is None:
 			candidates = self.getCandidates()
@@ -246,7 +246,7 @@ class ChemicalFormulaFeature(RegExFeature):
 	def getRegEx(self):
 		return self.regex
 
-#	def hasFeature(self, word):
+#	def isAMatch(self, word):
 #		if word is None:
 #			return False
 #
@@ -261,3 +261,13 @@ class ChemicalFormulaFeature(RegExFeature):
 #				fullMatch = fullMatch and re.match(self.getRegEx(), word)
 #
 #		return fullMatch, word
+
+featureList = [
+	KeywordFeature(), PuncFeature(), # Most specific match
+	ChemicalFormulaFeature(),
+	RomanNumFeature(), PositiveIntegerFeature(), GreekLetterFeature(),
+	AlphaNumericFeature(), AllUpperLettersFeature(), CapitalizedFeature(), 
+	ConjunctionFeature(), DeterminerFeature(), PrepositionFeature(), 
+	EnglishSuffixFeature(), LatinPrefixFeature(), LatinSuffixFeature(),
+	AllLowerLettersFeature() # to least specific match
+]
