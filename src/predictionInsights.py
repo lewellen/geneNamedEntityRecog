@@ -110,7 +110,7 @@ def histEmissionProbs(corpusStats, tags):
 		plot.bar(tagIndices, tagValues, label=tag, alpha=0.5, width=.8)
 
 	plot.yscale('log')
-	plot.ylabel("log P(tag | token)")
+	plot.ylabel("P(tag | token)")
 	plot.xlabel("Token")
 	plot.legend(loc="upper right")
 	plot.show()
