@@ -5,9 +5,25 @@ import math
 import common
 import evaluation
 import main
+import binaryResponse
 
 import numpy
 import matplotlib.pyplot as plot
+
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.linear_model import LogisticRegression
+
+def interpretConfusion(stringList, stringLabels):
+	vectorizer = CountVectorizer(stop_words = None)
+	termDocumentMatrix = vectorizer.fit_transform(stringList)
+
+	model = LogisticRegression()
+	model.fit(termDocumentMatrix, stringLabels)
+
+	indexToVocab = { index : word for (word, index) in vectorizer.vocabulary_.items() }
+	coefByVocab = { word : model.coef_[0, vectorizer.vocabulary_[word]] for word in vectorizer.vocabulary_ }
+
+	return sorted(coefByVocab.items(), key=operator.itemgetter(1))
 
 def plotLogConfusionMatrix(confusion, tags):
 	sortedTags = sorted(tags)
@@ -73,18 +89,25 @@ def unigramConfusion(tags, test, decoded):
 				am, pm = a, p
 
 	mostConfused = confusion[am][pm].most_common(3)
-	MC = { word : collections.Counter() for (word, count) in mostConfused }
+
+	words = { word : [] for (word, count) in mostConfused }
+	labels = { word : [] for (word, count) in mostConfused }
 
 	for taggedSentence in test:
 		for (prev, curr, nex) in zip(taggedSentence.taggedWords, taggedSentence.taggedWords[1:], taggedSentence.taggedWords[2:]):
 			for word, count in mostConfused:
 				if curr.word == word:
-					trigram = "%s %s %s" % (prev.word, curr.word, nex.word)
-					MC[word].update([trigram])
+					trigram = "%s %s" % (prev.word, nex.word)
+					words[curr.word].append(trigram)
+					labels[curr.word].append(curr.tag)
 
-	for word in MC:
-		print("%s\t:" % word),
-		print(MC[word].most_common(10))
+	print ("Possible descriminators for eliminating most confused unigrams")
+	for (word, count) in mostConfused:
+		print ("\"%s\" actual: %s predicted: %s; surrounding words:" % (word, am, pm))
+		coefsByWords = interpretConfusion(words[word], labels[word])
+		print { k : round(v, 3) for (k, v) in coefsByWords[:5] }
+		print { k : round(v, 3) for (k, v) in coefsByWords[-5:] }
+		print '----------------------------------------------'
 
 	plotLogConfusionMatrix(confusion, tags)
 

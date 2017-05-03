@@ -7,7 +7,7 @@ class LogisticRegression:
 		self.wordWeights = collections.defaultdict(float)
 		self.bias = 0
 
-	def fit(self, wordList, labelList, learnRate = 1.0, regFactor = 0.25, maxIter = 10):
+	def fit(self, wordList, labelList, learnRate = 1.0, regFactor = 0.25, maxItr = 1):
 		assert len(wordList) > 0
 		assert len(wordList) == len(labelList)
 		assert learnRate > 0
@@ -28,11 +28,11 @@ class LogisticRegression:
 		# regularization term
 		mu = regFactor
 
-		wordsByLabel = { label.lower() : collections.Counter() for label in uniqueLabels }
+		wordsByLabel = { label : collections.Counter() for label in uniqueLabels }
 		for (word, label) in zip(wordList, labelList):
 			wordsByLabel[label.lower()].update([word.lower()])
 
-		for iteration in xrange(0, maxIter):
+		for iteration in xrange(0, maxItr):
 			for labelIndex in [0, 1]:
 				p = self.__calcPi(self.bias, self.wordWeights, wordsByLabel[uniqueLabels[0]])
 
@@ -51,7 +51,7 @@ class LogisticRegression:
 		# w0 is scalar floating bias
 		# B is dictionary { scalar string word : scalar floating weight }
 		# N is Counter { scalar string word : scalar integer count }
-		p = sum( [ N[w] * B[w] for w in B ] )
+		p = sum( [ B[w] * N[w] for w in N ] )
 		p = math.exp(B0 - p)
 		p = p / (1.0 + p)
 
