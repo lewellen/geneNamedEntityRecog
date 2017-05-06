@@ -204,9 +204,15 @@ class LatinPrefixUnigramTrait(PrefixUnigramTrait):
 	def getName(self):
 		return "LatinPrefix"
 
+class SubunitUnigramTrait(InSetUnigramTrait):
+	def getCandidates(self):
+ 	       return ["alpha", "beta", "gamma"]
+	def getName(self):
+		return "Subunit"
+
 class GreekLetterUnigramTrait(InSetUnigramTrait):
 	def getCandidates(self):
- 	       return ["alpha", "beta", "gamma", "delta", "epsilon", "zeta", "eta", "theta", "iota", "kappa", "lambda", "mu", "nu", "xi", "omicron", "pi", "rho", "sigma", "tau", "upsilon", "phi", "chi", "psi", "omega"]
+ 	       return ["delta", "epsilon", "zeta", "eta", "theta", "iota", "kappa", "lambda", "mu", "nu", "xi", "omicron", "pi", "rho", "sigma", "tau", "upsilon", "phi", "chi", "psi", "omega"]
 
 	def getName(self):
 		return "GreekLetter"
@@ -232,9 +238,23 @@ class ConjunctionUnigramTrait(InSetUnigramTrait):
 	def getName(self):
 		return "Conjunction"
 
+class EnzymeUnigramTrait(InSetUnigramTrait):
+	def getCandidates(self):
+		return ["kinase"]
+
+	def getName(self):
+		return "Enzyme"
+
+class SpeciesUnigramTrait(InSetUnigramTrait):
+	def getCandidates(self):
+		return ["human", "mouse", "rat"]
+
+	def getName(self):
+		return "Species"
+
 class KeywordUnigramTrait(InSetUnigramTrait):
 	def getCandidates(self):
-		return ["kinase", "c", "human", "mouse", "rat", "gene", "protein", "genes", "proteins", "cdna", "rdna", "dna", "family", "receptor"]
+		return ["virus", "gene", "protein", "genes", "proteins", "cdna", "rdna", "dna", "family", "receptor"]
 
 	def getName(self):
 		return "Keyword"
@@ -242,12 +262,17 @@ class KeywordUnigramTrait(InSetUnigramTrait):
 	def rewriteWord(self, match):
 		return match
 
-class MostCommonBeginUnigramTrait(InSetUnigramTrait):
+class BioAcryosUnigramTrait(InSetUnigramTrait):
 	def getCandidates(self):
-		return [ "human", "c", "NF", "IL", "beta", "AP", "alpha", "protein", "C", "insulin" ]
+		# Cytochrome C, 
+		# NF - neurofibromatosis genetic disorder
+		# IL - Interleukins
+		# AP - activator protein
+		# myc - Regulator gene
+		return [ "c", "NF", "IL", "AP", "C", "myc", "c-myc" ]
 
 	def getName(self):
-		return "MostCommonBegin"
+		return "BioAcryos"
 
 	def rewriteWord(self, match):
 		return match
@@ -283,11 +308,14 @@ class ChemicalFormulaUnigramTrait(RegExUnigramTrait):
 #		return fullMatch, word
 
 unigramTraitList = [
-	MostCommonBeginUnigramTrait(),
-	KeywordUnigramTrait(), PuncUnigramTrait(), # Most specific match
-	ChemicalFormulaUnigramTrait(),
-	RomanNumUnigramTrait(), PositiveIntegerUnigramTrait(), PositiveRealUnigramTrait(), GreekLetterUnigramTrait(),
-	AlphaNumericUnigramTrait(), AllUpperLettersUnigramTrait(), CapitalizedUnigramTrait(), 
+	PuncUnigramTrait(), # Most specific match
+	BioAcryosUnigramTrait(),
+	SpeciesUnigramTrait(),
+	EnzymeUnigramTrait(), SubunitUnigramTrait(), ChemicalFormulaUnigramTrait(),
+	KeywordUnigramTrait(), 
+	RomanNumUnigramTrait(), GreekLetterUnigramTrait(), AlphaNumericUnigramTrait(), 
+	PositiveIntegerUnigramTrait(), PositiveRealUnigramTrait(), 
+	AllUpperLettersUnigramTrait(), CapitalizedUnigramTrait(), 
 	ConjunctionUnigramTrait(), DeterminerUnigramTrait(), PrepositionUnigramTrait(), 
 	EnglishSuffixUnigramTrait(), LatinPrefixUnigramTrait(), LatinSuffixUnigramTrait(),
 	AllLowerLettersUnigramTrait() # to least specific match

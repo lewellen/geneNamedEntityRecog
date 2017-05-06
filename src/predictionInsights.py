@@ -88,7 +88,7 @@ def unigramConfusion(tags, test, decoded):
 				maxCount = count
 				am, pm = a, p
 
-	mostConfused = confusion[am][pm].most_common(3)
+	mostConfused = confusion[am][pm].most_common(5)
 
 	words = { word : [] for (word, count) in mostConfused }
 	labels = { word : [] for (word, count) in mostConfused }
@@ -97,7 +97,7 @@ def unigramConfusion(tags, test, decoded):
 		for (prev, curr, nex) in zip(taggedSentence.taggedWords, taggedSentence.taggedWords[1:], taggedSentence.taggedWords[2:]):
 			for word, count in mostConfused:
 				if curr.word == word:
-					trigram = "%s %s" % (prev.word, nex.word)
+					trigram = "%s" % (prev.word)
 					words[curr.word].append(trigram)
 					labels[curr.word].append(curr.tag)
 

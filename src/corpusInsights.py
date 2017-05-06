@@ -10,6 +10,8 @@ import unigramTraits as unigramTraitsModule
 
 import numpy
 import matplotlib.pyplot as plot
+import scipy.stats
+
 
 def plotProbColGivenRow(D, rowNames, colNames, xlabel, ylabel):
 	# Create a bar chart where bars representing each row are presented 
@@ -65,6 +67,37 @@ def plotProbRowGivenCol(D, rowNames, colNames, xlabel, ylabel):
 	plot.xlabel(xlabel)
 	plot.ylabel(ylabel)
 	plot.legend(loc = "upper right") 
+	plot.show()
+
+def plotCorrelMatrix(corr, tags):
+	sortedTags = sorted(tags)
+	numTags = len(sortedTags)
+	indices = range(numTags)
+
+	T = numpy.zeros((numTags, numTags))
+	for i, a in enumerate(sortedTags):
+		for j, p in enumerate(sortedTags):
+			# these indices are swapped so it matches with the chart labels
+			T[i, j] = corr[a][p]
+
+	indices = range(numTags)
+	indices = [ i + 0.5 for i in indices]
+
+	f, subPlot = plot.subplots(1, 1)
+
+	subPlot.set_xticks(indices)
+	subPlot.set_xticklabels(sortedTags, rotation=90)
+	subPlot.set_xlabel("Feature")
+	subPlot.set_yticks(indices)
+	subPlot.set_yticklabels(sortedTags)
+	subPlot.set_ylabel("Feature")
+
+	f.colorbar(
+		subPlot.pcolormesh(T, cmap=plot.get_cmap('bwr'), vmin=-1, vmax=1), 
+		ax=subPlot
+		)
+	f.tight_layout()
+
 	plot.show()
 
 def histTokenLenBySemanticLabel(train, tags):
@@ -193,19 +226,51 @@ def mostCommonTrigrams(train, tags):
 				summary = ", ".join(mostCommon)
 				print("%s %s %s: %s" % (u, v, w, summary))
 
+def traitCorrelation(train, tags):
+	unigramTraits = unigramTraitsModule.unigramTraitList
+
+	presence = { trait.getName() : [] for trait in unigramTraits }
+	presence.update({ "tag_" + tag : [] for tag in tags })
+
+	for taggedSentence in train:
+		for taggedWord in taggedSentence.taggedWords:
+			for trait in unigramTraits:
+				isMatch, match = trait.isAMatch(taggedWord.word)
+				value = 0
+				if isMatch:
+					value = 1
+				presence[trait.getName()].append(value)
+
+			for tag in tags:
+				value = 0
+				if tag == taggedWord.tag:
+					value = 1
+				presence["tag_" + tag].append(value)
+
+	mat = { a : { b : 0 for b in presence } for a in presence }
+	for a in presence:
+		for b in presence:
+			#coeff, pvalue = scipy.stats.pearsonr(presence[a], presence[b])
+			coeff, pvalue = scipy.stats.spearmanr(presence[a], presence[b])
+			mat[a][b] = coeff
+
+	plotCorrelMatrix(mat, presence.keys())
+
 if __name__ == "__main__":
 	labeledFilePath = "res/genetag.labeled"
 	lFormat = common.LabeledFormat()
 	train = list(lFormat.deserialize(labeledFilePath))
 	tags = sorted(["I", "O", "B"])
 
+	traitCorrelation(train, tags)
+
 	# Insights on tokens
-	histTokenLenBySemanticLabel(train, tags)
-	histSymbolByTag(train, tags)
-	unigramTraitsByTag(train, tags)
-	mostFrequentByUnigramTraitAndTag(train, tags)
+#	histTokenLenBySemanticLabel(train, tags)
+#	histSymbolByTag(train, tags)
+#	unigramTraitsByTag(train, tags)
+#	mostFrequentByUnigramTraitAndTag(train, tags)
 
 	# n-gram insights
-	mostCommonUnigrams(train, tags)
-	mostCommonBigrams(train, tags)
-	mostCommonTrigrams(train, tags)
+#	mostCommonUnigrams(train, tags)
+#	mostCommonBigrams(train, tags)
+#	mostCommonTrigrams(train, tags)
