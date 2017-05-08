@@ -1,6 +1,7 @@
 import collections
 import operator
 import math
+import sys
 
 import common
 import evaluation
@@ -190,7 +191,11 @@ def histEmissionProbs(corpusStats, tags):
 	)
 
 if __name__ == "__main__":
-	inputFilePath = "res/genetag.labeled"
+	if len(sys.argv) != 2:
+		print ("%s <res/file.labeled>" % sys.argv[0])
+		exit(1)
+
+	inputFilePath = sys.argv[1]
 
 	trainFilePath = "train.labeled.txt"
 	testFilePath = "test.labeled.txt"

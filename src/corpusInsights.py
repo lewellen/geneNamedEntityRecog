@@ -2,6 +2,7 @@ import collections
 import itertools
 import re
 import operator
+import sys
 
 import common
 import hiddenMarkovModel as hmm
@@ -175,7 +176,11 @@ def traitCorrelation(train, tags):
 	plotUtils.plotCorrelMatrix(mat, presence.keys())
 
 if __name__ == "__main__":
-	labeledFilePath = "res/genetag.labeled"
+	if len(sys.argv) != 2:
+		print("%s <res/file.labeled>" % sys.argv[0])
+		exit(1)
+
+	labeledFilePath = sys.argv[1]
 	lFormat = common.LabeledFormat()
 	train = list(lFormat.deserialize(labeledFilePath))
 	tags = sorted(["I", "O", "B"])
