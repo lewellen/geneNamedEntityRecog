@@ -6,6 +6,7 @@ import common
 import evaluation
 import main
 import binaryResponse
+import plotUtils
 
 import numpy
 import matplotlib.pyplot as plot
@@ -183,25 +184,10 @@ def histEmissionProbs(corpusStats, tags):
 
 	# Get all the unique keys in ascending order
 	allKeys = sorted(list(set([ key for tag in tags for key in E[tag] ])))
-	indices = range(len(allKeys))
-	indexByKey = { key : index for (key, index) in zip(allKeys, indices) }
-	plot.xticks(indices, allKeys, rotation=90)
 
-	for tag in tags:
-		tagKeys = sorted(E[tag].keys())
-		tagValues = [ E[tag][key] for key in tagKeys ]
-		tagIndices = [ indexByKey[key] for key in tagKeys ]
-		plot.bar(tagIndices, tagValues, label=tag, alpha=0.5, width=.8)
-
-	plot.yscale('log')
-	plot.ylabel("P(tag | token)")
-	plot.xlabel("Token")
-	plot.legend(loc="upper right")
-	plot.show()
-
-
-
-
+	plotUtils.plotGroupedBarChart(
+		E, tags, allKeys, "Token", "P(token | tag)"
+	)
 
 if __name__ == "__main__":
 	inputFilePath = "res/genetag.labeled"

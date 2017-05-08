@@ -144,7 +144,7 @@ class GreekLetterUnigramTraitTest(unittest.TestCase, PositiveNegativeUnigramTrai
 		return unigramTraits.GreekLetterUnigramTrait()
 
 	def getPositiveExamples(self):
-		return [ "alpha", "mu", "gamma" ]
+		return [ "phi", "mu", "zeta" ]
 
 	def getNegativeExamples(self):
 		return [ "xor", "metric", "", "foo" ]
@@ -178,6 +178,16 @@ class ConjunctionUnigramTraitTest(unittest.TestCase, PositiveNegativeUnigramTrai
 
 	def getNegativeExamples(self):
 		return [ "xor", "metric", "", "foo" ]
+
+class ChemicalFormulaUnigramTraitTest(unittest.TestCase, PositiveNegativeUnigramTraitTest):
+	def getUnigramTrait(self):
+		return unigramTraits.ChemicalFormulaUnigramTrait()
+
+	def getPositiveExamples(self):
+		return [ "C", "H20", "NaHCO3" ]
+
+	def getNegativeExamples(self):
+		return [ "", "c", "The" ]
 
 if __name__ == "__main__":
 	unittest.main()

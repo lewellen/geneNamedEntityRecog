@@ -98,6 +98,32 @@ class PositiveRealUnigramTrait(RegExUnigramTrait):
 class PuncUnigramTrait(RegExUnigramTrait):
 	def __init__(self):
         	self.regex = re.compile("^[^\w\s]+$")
+		self.rewrite = {
+			'"' : 'PuncQuote',
+			'\'' : 'PuncQuote',
+			'$' : 'PuncUnit',
+			'%' : 'PuncUnit',
+			'&' : 'PuncArith',
+			'(' : 'PuncOpen',
+			')' : 'PuncClose',
+			'*' : 'PuncArith',
+			'+' : 'PuncArith',
+			',' : 'PuncSepList',
+			'.' : 'PuncSepEnd',
+			'-' : 'PuncSep',
+			'`' : 'PuncQuote',
+			'_' : 'PuncSepList',
+			';' : 'PuncSepList',
+			'/' : 'PuncSepList',
+			'\\' : 'PuncSepList',
+			':' : 'PuncSepList',
+			'<' : 'PuncRel',
+			'>' : 'PuncRel',
+			'=' : 'PuncRel',
+			'?' : 'PuncSepEnd',
+			'[' : 'PuncOpen',
+			']' : 'PuncClose'
+		}
 
 	def getName(self):
 		return "Punc"
@@ -106,7 +132,9 @@ class PuncUnigramTrait(RegExUnigramTrait):
 		return self.regex
 
 	def rewriteWord(self, match):
-		return match
+		if match in self.rewrite:
+			return self.rewrite[match]
+		return self.getName()
 
 class RomanNumUnigramTrait(RegExUnigramTrait): 
 	def __init__(self):
@@ -259,9 +287,6 @@ class KeywordUnigramTrait(InSetUnigramTrait):
 	def getName(self):
 		return "Keyword"
 
-	def rewriteWord(self, match):
-		return match
-
 class BioAcryosUnigramTrait(InSetUnigramTrait):
 	def getCandidates(self):
 		# Cytochrome C, 
@@ -269,20 +294,18 @@ class BioAcryosUnigramTrait(InSetUnigramTrait):
 		# IL - Interleukins
 		# AP - activator protein
 		# myc - Regulator gene
-		return [ "c", "NF", "IL", "AP", "C", "myc", "c-myc" ]
+		# bcl - regulator protein
+		return [ "c", "NF", "IL", "AP", "C", "myc", "c-myc", "bcl" ]
 
 	def getName(self):
 		return "BioAcryos"
-
-	def rewriteWord(self, match):
-		return match
 
 class ChemicalFormulaUnigramTrait(RegExUnigramTrait):
 	def __init__(self):
 		symbols = ["Ac", "Al", "Am", "Sb", "Ar", "As", "At", "Ba", "Bk", "Be", "Bi", "Bh", "B", "Br", "Cd", "Ca", "Cf", "C", "Ce", "Cs", "Cl", "Cr", "Co", "Cu", "Cm", "Ds", "Db", "Dy", "Es", "Er", "Eu", "Fm", "F", "Fr", "Gd", "Ga", "Ge", "Au", "Hf", "Hs", "He", "Ho", "H", "In", "I", "Ir", "Fe", "Kr", "La", "Lr", "Pb", "Li", "Lu", "Mg", "Mn", "Mt", "Md", "Hg", "Mo", "Nd", "Ne", "Np", "Ni", "Nb", "N", "No", "Os", "O", "Pd", "P", "Pt", "Pu", "Po", "K", "Pr", "Pm", "Pa", "Ra", "Rn", "Re", "Rh", "Rg", "Rb", "Ru", "Rf", "Sm", "Sc", "Sg", "Se", "Si", "Ag", "Na", "Sr", "S", "Ta", "Tc", "Te", "Tb", "Tl", "Th", "Tm", "Sn", "Ti", "W", "Uub", "Uuh", "Uuo", "Uup", "Uuq", "Uus", "Uut", "Uuu", "U", "V", "Xe", "Yb", "Y", "Zn", "Zr"]
 
 		symbols = "|".join(symbols)
-		expr = "((%s)\d*)+" % (symbols)
+		expr = "^((%s)\d*)+$" % (symbols)
 		self.regex = re.compile(expr)
 
 	def getName(self):
@@ -292,20 +315,8 @@ class ChemicalFormulaUnigramTrait(RegExUnigramTrait):
 		return self.regex
 
 #	def isAMatch(self, word):
-#		if word is None:
-#			return False
-#
-#		S = []
-#		fullMatch = True
-#		for i, c in enumerate(word):
-#			if c == '(':
-#				S.append((i,c))
-#			elif c == ')':
-#				(j, d) = S.pop()
-#				sub = word[j + 1:i - 1]
-#				fullMatch = fullMatch and re.match(self.getRegEx(), word)
-#
-#		return fullMatch, word
+#		todo, need CFG parser to do this robustly.
+
 
 unigramTraitList = [
 	PuncUnigramTrait(), # Most specific match

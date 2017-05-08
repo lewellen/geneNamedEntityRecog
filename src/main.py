@@ -147,11 +147,17 @@ def decode(trainFilePath, testFilePath, outputFilePath):
 
 	for taggedSentence in train:
 		for taggedWord in taggedSentence.taggedWords:
+			matchApplied = False
 			for unigramTrait in unigramTraits:
 				hasMatch, match = unigramTrait.isAMatch(taggedWord.word)
 				if hasMatch:
-					taggedWord.word = unigramTrait.rewriteWord(match)
+					newWord = unigramTrait.rewriteWord(match)
+					taggedWord.word = newWord
+					matchApplied = True
 					break
+
+			if not matchApplied:
+				taggedWord.word = "XXX"
 
 	# Create a decoder that operates over (B I O) values AND tags
 	#A = [common.TaggedSentence( [ common.TaggedWord(w.tag, w.tag) for w in t.taggedWords] ) for t in train]
