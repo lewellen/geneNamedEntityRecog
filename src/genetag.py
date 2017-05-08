@@ -1,7 +1,10 @@
 import common
 
+import re
+
 class TagFormat:
 	def __init__(self):
+		self.punc = re.compile("^[^A-Za-z0-9]+$")
 		pass
 
 	def deserialize(self, filePath):
@@ -38,6 +41,10 @@ class TagFormat:
 
 			if pTag in ('B', 'I') and tag == 'B':
 				tag = 'I'
+
+			# Discard punctuation
+			if re.match(self.punc, word.strip()):
+				continue
 
 			pTag = tag
 
