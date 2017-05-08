@@ -20,12 +20,34 @@ def histSymbolByTag(train, tags):
 				symbolsByTag[taggedWord.tag][letter] += 1
 
 	probOfTagGivenSymbol = jointFreqMatrix.toProbRowGivenCol(
-		symbolsByTag, tags, symbols) 
+		symbolsByTag, tags, symbols
+	) 
 
 	plotUtils.plotStackedBarChart(
 		probOfTagGivenSymbol, 
 		tags, symbols,
 		"Symbol", "P(tag | symbol)"
+	)
+
+def histWordLength(train, tags):
+	words = [ taggedWord.word for taggedSentence in train for taggedWord in taggedSentence.taggedWords ]
+	maxWordLen = max(map(lambda x : len(x), words))
+	wordLens = range(maxWordLen + 1)
+	wordLensByTag = { tag : { wordLen : 0 for wordLen in wordLens } for tag in tags }	
+
+	for taggedSentence in train:
+		for taggedWord in taggedSentence.taggedWords:
+			n = len(taggedWord.word)
+			wordLensByTag[taggedWord.tag][n] += 1
+
+	probOfTagGivenLen = jointFreqMatrix.toProbRowGivenCol(
+		wordLensByTag, tags, wordLens
+	)
+
+	plotUtils.plotStackedBarChart(
+		probOfTagGivenLen, 
+		tags, wordLens,
+		"wordLength", "P(tag | wordLength)"
 	)
 
 def mostCommonUnigrams(train, tags):
@@ -160,6 +182,7 @@ if __name__ == "__main__":
 
 	# Insights on tokens
 	histSymbolByTag(train, tags)
+	histWordLength(train, tags)
 
 	# n-gram insights
 	mostCommonUnigrams(train, tags)
