@@ -33,7 +33,7 @@ class XmlFormat:
 		if textType == "text":
 			taggedWords += map(lambda word: common.TaggedWord(word, "O"), tokens)
 		else:
-			taggedWords += [ common.TaggedWord(tokens[0], "B") ]
+			taggedWords += [ common.TaggedWord(tokens[0], "I") ]
 			taggedWords += map(lambda word: common.TaggedWord(word, "I"), tokens[1:])
 	
 		return filter(lambda taggedWord: len(taggedWord.word) > 0, taggedWords)

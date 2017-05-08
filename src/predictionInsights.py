@@ -210,7 +210,7 @@ if __name__ == "__main__":
 	test = list(fileFormat.deserialize(testFilePath))
 	decoded = list(fileFormat.deserialize(decodedFilePath))
 
-	tags = sorted( ["I", "O", "B"] )
+	tags = sorted( ["I", "O"] )
 
 	unigramConfusion(tags, test, decoded)
 	bigramConfusion(tags, test, decoded)

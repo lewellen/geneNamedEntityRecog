@@ -12,7 +12,7 @@ import jointFreqMatrix
 
 import scipy.stats
 
-def histSymbolByTag(train, tags):
+def probUnicharByTag(train, tags):
 	symbols = map(lambda x : chr(x), xrange(33, 127))
 	symbolsByTag = { tag : { symbol : 0 for symbol in symbols } for tag in tags }
 	for taggedSentence in train:
@@ -28,6 +28,70 @@ def histSymbolByTag(train, tags):
 		probOfTagGivenSymbol, 
 		tags, symbols,
 		"Symbol", "P(tag | symbol)"
+	)
+
+def probBicharByTag(train, tags):
+	symbols = map(lambda x : chr(x), xrange(33, 127))
+	symbolPairs = ["%s%s" % (a, b) for a in symbols for b in symbols]
+
+	symbolsByTag = { tag : { pair : 0 for pair in symbolPairs } for tag in tags }
+	for taggedSentence in train:
+		for taggedWord in taggedSentence.taggedWords:
+			for (a, b) in zip(taggedWord.word, taggedWord.word[1:]):
+				symbolsByTag[taggedWord.tag]["%s%s" % (a, b)] += 1
+
+	probOfSymbolGivenTag = jointFreqMatrix.toProbColGivenRow(
+		symbolsByTag, tags, symbolPairs
+	)
+
+	# Since symbolPairs is large for a plot, filter to show only those that have a high probability
+	threshold = 0.01
+	symbolPairs = filter(lambda pair : any([ probOfSymbolGivenTag[tag][pair] > threshold for tag in tags]), symbolPairs)
+	print symbolPairs
+
+	probOfTagGivenSymbol = jointFreqMatrix.toProbRowGivenCol(
+		symbolsByTag, tags, symbolPairs
+	)
+
+	plotUtils.plotStackedBarChart(
+		probOfTagGivenSymbol, 
+		tags, symbolPairs,
+		"Symbol Pair", "P(tag | symbol pair)"
+	)
+
+def probTricharByTag(train, tags):
+	symbols = map(lambda x : chr(x), xrange(33, 127))
+	symbolPairs = ["%s%s%s" % (a, b, c) for a in symbols for b in symbols for c in symbols]
+
+	symbolsByTag = { tag : { pair : 0 for pair in symbolPairs } for tag in tags }
+	for taggedSentence in train:
+		for taggedWord in taggedSentence.taggedWords:
+			for (a, b, c) in zip(taggedWord.word, taggedWord.word[1:], taggedWord.word[2:]):
+				symbolsByTag[taggedWord.tag]["%s%s%s" % (a, b, c)] += 1
+
+	probOfSymbolGivenTag = jointFreqMatrix.toProbColGivenRow(
+		symbolsByTag, tags, symbolPairs
+	)
+
+	# Since symbolPairs is large for a plot, filter to show only those that have a high probability
+	threshold = 0.003
+	symbolPairs = filter(lambda pair : any([ probOfSymbolGivenTag[tag][pair] > threshold for tag in tags]), symbolPairs)
+
+	output = { tag : [] for tag in tags }
+	for symbolPair in symbolPairs:
+		maxTag = max(tags, key = lambda tag : probOfSymbolGivenTag[tag][symbolPair])
+		output[maxTag].append(symbolPair)
+
+	print output
+
+	probOfTagGivenSymbol = jointFreqMatrix.toProbRowGivenCol(
+		symbolsByTag, tags, symbolPairs
+	)
+
+	plotUtils.plotStackedBarChart(
+		probOfTagGivenSymbol, 
+		tags, symbolPairs,
+		"Symbol Triple", "P(tag | symbol triple)"
 	)
 
 def histWordLength(train, tags):
@@ -183,10 +247,13 @@ if __name__ == "__main__":
 	labeledFilePath = sys.argv[1]
 	lFormat = common.LabeledFormat()
 	train = list(lFormat.deserialize(labeledFilePath))
-	tags = sorted(["I", "O", "B"])
+	tags = sorted(["I", "O"])
 
 	# Insights on tokens
-	histSymbolByTag(train, tags)
+	probUnicharByTag(train, tags)
+	probBicharByTag(train, tags)
+	probTricharByTag(train, tags)
+
 	histWordLength(train, tags)
 
 	# n-gram insights

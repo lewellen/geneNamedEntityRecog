@@ -24,7 +24,6 @@ class TagFormat:
 	def __rawToTagged(self, sentence):
 		taggedWords = []
 
-		pTag = None
 		rawWords = sentence.split()
 		for rawWord in rawWords:
 			word = None
@@ -35,18 +34,13 @@ class TagFormat:
 				tag = 'O'					
 			elif rawWord.endswith('_GENE1') or rawWord.endswith('_GENE2'):
 				word = rawWord[:-6]
-				tag = 'B'
+				tag = 'I'
 			else:
 				assert False
-
-			if pTag in ('B', 'I') and tag == 'B':
-				tag = 'I'
 
 			# Discard punctuation
 			if re.match(self.punc, word.strip()):
 				continue
-
-			pTag = tag
 
 			taggedWords.append(common.TaggedWord(word.strip(), tag))
 

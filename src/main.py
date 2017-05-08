@@ -29,17 +29,13 @@ class TagPredictor:
     
     def __indexToTag(self, index):
         if(index == 0):
-            return "B"
-        if(index == 1):
             return "I"
         return "O"
     
     def __tagToIndex(self, tag):
-        if(tag == "B"):
-            return 0
         if(tag == "I"):
-            return 1
-        return 2
+            return 0
+        return 1
 
     def __toSklearnX(self, taggedSentences):
         for taggedSentence in taggedSentences:
@@ -55,7 +51,7 @@ class Featurizer:
     def __init__(self, train):
 	self.unigramTraits = unigramTraitsModule.unigramTraitList
 
-	tags = ["I", "O", "B"]
+	tags = ["I", "O"]
 	for unigramTrait in self.unigramTraits:
 		unigramTrait.selfSelect(train, tags)
 
@@ -141,7 +137,7 @@ def decode(trainFilePath, testFilePath, outputFilePath):
 
 	unigramTraits = unigramTraitsModule.unigramTraitList
 
-	tags = ["I", "O", "B"]
+	tags = ["I", "O"]
 	for unigramTrait in unigramTraits:
 		unigramTrait.selfSelect(train, tags)
 

@@ -197,6 +197,13 @@ class InSetUnigramTrait(WordPartUnigramTrait):
 	def satisfies(self, candidates, word):
 		return (word.lower() in candidates, word.lower())
 
+class InfixUnigramTrait(WordPartUnigramTrait):
+	def satisfies(self, candidates, word):
+		for infix in candidates:
+			if infix.lower() in word.lower():
+				return (True, infix)
+		return (False, None)
+
 class PrefixUnigramTrait(WordPartUnigramTrait):
 	def satisfies(self, candidates, word):
 		for prefix in candidates:
@@ -298,7 +305,7 @@ class BioAcryosUnigramTrait(InSetUnigramTrait):
 		return [ "c", "NF", "IL", "AP", "C", "myc", "c-myc", "bcl" ]
 
 	def getName(self):
-		return "BioAcryos"
+		return "BioAcryo"
 
 class ChemicalFormulaUnigramTrait(RegExUnigramTrait):
 	def __init__(self):
@@ -317,6 +324,19 @@ class ChemicalFormulaUnigramTrait(RegExUnigramTrait):
 #	def isAMatch(self, word):
 #		todo, need CFG parser to do this robustly.
 
+class OTricharsUnigramTrait(InfixUnigramTrait):
+	def getCandidates(self):
+		return [ 'The', 'and', 'ate', 'ati', 'con', 'cti', 'ect', 'ent', 'ere', 'ess', 'for', 'hat', 'ica', 'ing', 'ion', 'ith', 'ive', 'lat', 'nce', 'ons', 'pre', 'res', 'ted', 'tha', 'the', 'tio', 'tiv', 'tra', 'wit' ]
+
+	def getName(self):
+		return "OTrichars"
+
+class ITricharsUnigramTrait(InfixUnigramTrait):
+	def getCandidates(self):
+		return [ 'RNA', 'act', 'alp', 'ans', 'ant', 'ase', 'bet', 'bin', 'cep', 'cto', 'din', 'ece', 'ein', 'ene', 'ept', 'eta', 'fac', 'gen', 'ina', 'ine', 'ins', 'kin', 'lin', 'lph', 'mot', 'nas', 'omo', 'ote', 'pha', 'pro', 'pto', 'ran', 'ras', 'rec', 'rom', 'rot', 'tei', 'ter', 'tin', 'tor' ]
+
+	def getName(self):
+		return "ITrichars"
 
 unigramTraitList = [
 	PuncUnigramTrait(), # Most specific match
@@ -328,6 +348,7 @@ unigramTraitList = [
 	PositiveIntegerUnigramTrait(), PositiveRealUnigramTrait(), 
 	AllUpperLettersUnigramTrait(), CapitalizedUnigramTrait(), 
 	ConjunctionUnigramTrait(), DeterminerUnigramTrait(), PrepositionUnigramTrait(), 
+	OTricharsUnigramTrait(), ITricharsUnigramTrait(),
 	EnglishSuffixUnigramTrait(), LatinPrefixUnigramTrait(), LatinSuffixUnigramTrait(),
 	AllLowerLettersUnigramTrait() # to least specific match
 ]
